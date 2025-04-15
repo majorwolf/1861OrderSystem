@@ -230,6 +230,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update a menu item
+  app.put('/api/menu/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid menu item ID' });
+      }
+      
+      // Validate the menu item data
+      const updateData = req.body;
+      console.log('Received update menu item request:', updateData);
+      
+      if (!updateData.name || !updateData.description || !updateData.price || !updateData.category) {
+        console.log('Missing required fields:', { 
+          name: !!updateData.name, 
+          description: !!updateData.description, 
+          price: !!updateData.price, 
+          category: !!updateData.category 
+        });
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+      
+      // Prepare clean update data
+      const menuItemData = {
+        name: updateData.name,
+        description: updateData.description,
+        price: updateData.price,
+        category: updateData.category,
+        customizable: updateData.customizable,
+        available: updateData.available
+      };
+      
+      // Update the menu item
+      const updatedItem = await storage.updateMenuItem(id, menuItemData);
+      if (!updatedItem) {
+        return res.status(404).json({ message: 'Menu item not found' });
+      }
+      
+      // Broadcast the menu update to all connected clients
+      broadcastToAll({
+        type: 'menuUpdated',
+        payload: {
+          action: 'updated',
+          item: updatedItem
+        }
+      });
+      
+      res.status(200).json(updatedItem);
+    } catch (error) {
+      console.error('Error updating menu item:', error);
+      res.status(500).json({ message: 'Failed to update menu item' });
+    }
+  });
+  
   // Get menu items by category
   app.get('/api/menu/:category', async (req, res) => {
     try {

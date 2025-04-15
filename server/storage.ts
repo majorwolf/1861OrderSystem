@@ -47,6 +47,7 @@ export interface IStorage {
   getOrder(id: number): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(update: OrderStatusUpdate): Promise<Order | undefined>;
+  purgeAllOrders(): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {

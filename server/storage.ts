@@ -14,6 +14,7 @@ export interface IStorage {
   getMenuItem(id: number): Promise<MenuItem | undefined>;
   createMenuItem(item: InsertMenuItem): Promise<MenuItem>;
   updateMenuItemAvailability(id: number, available: boolean): Promise<MenuItem | undefined>;
+  deleteMenuItem(id: number): Promise<boolean>;
 
   // Tables
   getTables(): Promise<Table[]>;
@@ -106,7 +107,13 @@ export class MemStorage implements IStorage {
 
   async createMenuItem(item: InsertMenuItem): Promise<MenuItem> {
     const id = this.menuItemId++;
-    const menuItem: MenuItem = { ...item, id };
+    const menuItem: MenuItem = { 
+      ...item, 
+      id,
+      // Set defaults for new items
+      available: item.available !== undefined ? item.available : true,
+      customizable: item.customizable !== undefined ? item.customizable : false
+    };
     this.menuItems.set(id, menuItem);
     return menuItem;
   }
@@ -120,6 +127,16 @@ export class MemStorage implements IStorage {
     const updatedMenuItem = { ...menuItem, available };
     this.menuItems.set(id, updatedMenuItem);
     return updatedMenuItem;
+  }
+  
+  async deleteMenuItem(id: number): Promise<boolean> {
+    const exists = this.menuItems.has(id);
+    if (!exists) {
+      return false;
+    }
+    
+    this.menuItems.delete(id);
+    return true;
   }
 
   // Tables

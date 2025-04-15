@@ -141,6 +141,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Create a new menu item
+  app.post('/api/menu', async (req, res) => {
+    try {
+      // Validate the menu item data
+      const newItem = req.body;
+      
+      if (!newItem.name || !newItem.description || !newItem.price || !newItem.category) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+      
+      // Create the menu item
+      const createdItem = await storage.createMenuItem(newItem);
+      
+      // Broadcast the menu update to all connected clients
+      broadcastToAll({
+        type: 'menuUpdated',
+        payload: {
+          action: 'created',
+          item: createdItem
+        }
+      });
+      
+      res.status(201).json(createdItem);
+    } catch (error) {
+      console.error('Error creating menu item:', error);
+      res.status(500).json({ message: 'Failed to create menu item' });
+    }
+  });
+  
+  // Delete a menu item
+  app.delete('/api/menu/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid menu item ID' });
+      }
+      
+      const deleted = await storage.deleteMenuItem(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Menu item not found' });
+      }
+      
+      // Broadcast the menu update to all connected clients
+      broadcastToAll({
+        type: 'menuUpdated',
+        payload: {
+          action: 'deleted',
+          itemId: id
+        }
+      });
+      
+      res.status(200).json({ message: 'Menu item deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting menu item:', error);
+      res.status(500).json({ message: 'Failed to delete menu item' });
+    }
+  });
+  
   // Get menu items by category
   app.get('/api/menu/:category', async (req, res) => {
     try {

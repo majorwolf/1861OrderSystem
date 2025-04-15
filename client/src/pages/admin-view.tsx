@@ -2,6 +2,15 @@ import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { MenuItem } from "@shared/schema";
 
+// Type for a new menu item form
+interface NewMenuItem {
+  name: string;
+  description: string;
+  price: string;
+  category: string;
+  customizable: boolean;
+}
+
 export default function AdminView() {
   // State for menu items
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -12,6 +21,18 @@ export default function AdminView() {
   const [unavailableItems, setUnavailableItems] = useState<Set<number>>(new Set());
   const [savingChanges, setSavingChanges] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  
+  // State for add/delete functionality
+  const [showAddItemForm, setShowAddItemForm] = useState(false);
+  const [newItem, setNewItem] = useState<NewMenuItem>({
+    name: "",
+    description: "",
+    price: "",
+    category: "pizza",
+    customizable: false
+  });
+  const [addingItem, setAddingItem] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<number | null>(null);
   
   // Fetch menu items
   useEffect(() => {
@@ -93,6 +114,95 @@ export default function AdminView() {
     }
   };
   
+  // Function to add a new menu item
+  const addMenuItem = async () => {
+    if (!newItem.name || !newItem.description || !newItem.price) {
+      setError('Please fill in all required fields');
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+
+    try {
+      setAddingItem(true);
+      
+      const response = await fetch('/api/menu', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newItem),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to add menu item');
+      }
+      
+      const data = await response.json();
+      
+      setMenuItems(prev => [...prev, data]);
+      setSuccessMessage('Menu item added successfully!');
+      
+      // Reset form
+      setNewItem({
+        name: "",
+        description: "",
+        price: "",
+        category: "pizza",
+        customizable: false
+      });
+      setShowAddItemForm(false);
+      
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error('Error adding menu item:', err);
+      setError('Failed to add menu item. Please try again.');
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setAddingItem(false);
+    }
+  };
+  
+  // Function to delete a menu item
+  const deleteMenuItem = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this menu item? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      setDeletingItem(id);
+      
+      const response = await fetch(`/api/menu/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete menu item');
+      }
+      
+      setMenuItems(prev => prev.filter(item => item.id !== id));
+      setSuccessMessage('Menu item deleted successfully!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error('Error deleting menu item:', err);
+      setError('Failed to delete menu item. Please try again.');
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setDeletingItem(null);
+    }
+  };
+  
+  // Handle input changes for new item form
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setNewItem(prev => ({ ...prev, [name]: checked }));
+    } else {
+      setNewItem(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -115,15 +225,108 @@ export default function AdminView() {
         </div>
       )}
       
+      {/* Add New Menu Item Section */}
+      <div className="bg-white p-6 rounded-lg shadow mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Add New Menu Item</h2>
+          <button
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            onClick={() => setShowAddItemForm(!showAddItemForm)}
+          >
+            {showAddItemForm ? 'Cancel' : 'Add New Item'}
+          </button>
+        </div>
+        
+        {showAddItemForm && (
+          <div className="bg-gray-50 p-4 rounded mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={newItem.name}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded"
+                  placeholder="Item name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+                <input
+                  type="text"
+                  name="price"
+                  value={newItem.price}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded"
+                  placeholder="$0.00"
+                  required
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                <textarea
+                  name="description"
+                  value={newItem.description}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded"
+                  rows={3}
+                  placeholder="Item description"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select
+                  name="category"
+                  value={newItem.category}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="pizza">Pizza</option>
+                  <option value="drink">Drink</option>
+                  <option value="side">Side</option>
+                  <option value="dessert">Dessert</option>
+                </select>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="customizable"
+                  name="customizable"
+                  checked={newItem.customizable}
+                  onChange={handleInputChange}
+                  className="mr-2"
+                />
+                <label htmlFor="customizable" className="text-sm font-medium text-gray-700">
+                  Customizable
+                </label>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+                onClick={addMenuItem}
+                disabled={addingItem}
+              >
+                {addingItem ? 'Adding...' : 'Add Item'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Menu Items Availability Section */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Menu Items Availability</h2>
+          <h2 className="text-xl font-semibold">Menu Items Management</h2>
           <button
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 flex items-center"
             onClick={saveChanges}
             disabled={savingChanges}
           >
-            {savingChanges ? 'Saving...' : 'Save Changes'}
+            {savingChanges ? 'Saving...' : 'Save Availability Changes'}
           </button>
         </div>
         
@@ -147,6 +350,9 @@ export default function AdminView() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Availability
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -176,6 +382,15 @@ export default function AdminView() {
                           {unavailableItems.has(item.id) ? 'Unavailable' : 'Available'}
                         </span>
                       </label>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => deleteMenuItem(item.id)}
+                        disabled={deletingItem === item.id}
+                        className="text-xs px-2 py-1 text-white bg-red-600 rounded hover:bg-red-700 disabled:bg-gray-400"
+                      >
+                        {deletingItem === item.id ? 'Deleting...' : 'Delete'}
+                      </button>
                     </td>
                   </tr>
                 ))}

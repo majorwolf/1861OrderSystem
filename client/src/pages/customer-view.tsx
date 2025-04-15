@@ -183,17 +183,78 @@ export default function CustomerView() {
         <div className="mt-6">
           <Button 
             className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold text-lg"
-            disabled={cart.length === 0 || (cart.length > 0 && !customerLastName.trim())}
-            onClick={() => {
-              alert(`Order placed successfully for ${customerLastName}!`);
-              clearCart();
-              setCustomerLastName("");
+            disabled={cart.length === 0 || (cart.length > 0 && !customerLastName.trim()) || submitting}
+            onClick={async () => {
+              try {
+                setSubmitting(true);
+                setSubmitError(null);
+                
+                // Determine order type based on cart items
+                const hasFood = cart.some(item => {
+                  // Consider an item as food if it's not in the drink category
+                  return item.name.toLowerCase().indexOf('pizza') >= 0 || 
+                         item.name.toLowerCase().indexOf('wing') >= 0;
+                });
+                const hasDrink = cart.some(item => 
+                  item.name.toLowerCase().indexOf('coke') >= 0 || 
+                  item.name.toLowerCase().indexOf('sprite') >= 0 ||
+                  item.name.toLowerCase().indexOf('drink') >= 0
+                );
+                
+                // Set the type based on contents
+                let orderType = "kitchen"; // Default to kitchen
+                if (hasFood && hasDrink) {
+                  orderType = "both"; // Both kitchen and bar
+                } else if (!hasFood && hasDrink) {
+                  orderType = "bar"; // Only drinks, send to bar
+                }
+                
+                // Create the order payload
+                const order = {
+                  tableId,
+                  type: orderType,
+                  status: "new",
+                  items: cart,
+                  notes: `Order for ${customerLastName}`
+                };
+                
+                console.log('Submitting order:', order);
+                
+                // Submit the order to the server
+                const response = await fetch('/api/orders', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(order)
+                });
+                
+                if (!response.ok) {
+                  throw new Error('Failed to submit order');
+                }
+                
+                const createdOrder = await response.json();
+                console.log('Order created successfully:', createdOrder);
+                
+                // Show success message and clear the form
+                alert(`Order placed successfully for ${customerLastName}!`);
+                clearCart();
+                setCustomerLastName("");
+              } catch (err) {
+                console.error('Error placing order:', err);
+                setSubmitError('Failed to place order. Please try again.');
+              } finally {
+                setSubmitting(false);
+              }
             }}
           >
-            Place Order
+            {submitting ? 'Placing Order...' : 'Place Order'}
           </Button>
           {cart.length > 0 && !customerLastName.trim() && (
             <p className="text-red-500 text-sm mt-2">Please enter your last name to place the order</p>
+          )}
+          {submitError && (
+            <p className="text-red-500 text-sm mt-2">{submitError}</p>
           )}
         </div>
       </div>

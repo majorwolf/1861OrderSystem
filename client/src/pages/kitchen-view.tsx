@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Order } from "@shared/schema";
+import { updateOrderStatus as wsUpdateOrderStatus } from "@/lib/websocket";
 
 export default function KitchenView() {
   const [kitchenOrders, setKitchenOrders] = useState<Order[]>([]);
@@ -146,10 +147,30 @@ function getStatusClass(status: string): string {
 }
 
 function updateOrderStatus(orderId: number, status: string) {
-  // This should use the websocket function from websocket.ts
-  // For now, we'll just add a console.log placeholder
   console.log(`Updating order ${orderId} to status: ${status}`);
   
-  // Call the updateOrderStatus function from the websocket lib
-  // updateOrderStatus(orderId, status);
+  // First update via REST API directly
+  fetch(`/api/orders/${orderId}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ status })
+  })
+  .then(res => {
+    if (!res.ok) {
+      throw new Error('Failed to update order status');
+    }
+    return res.json();
+  })
+  .then(updatedOrder => {
+    console.log('Order status updated successfully:', updatedOrder);
+    
+    // Also send via WebSocket for real-time updates to other clients
+    wsUpdateOrderStatus(orderId, status);
+  })
+  .catch(err => {
+    console.error('Error updating order status:', err);
+    alert('Failed to update order status. Please try again.');
+  });
 }

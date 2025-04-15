@@ -347,9 +347,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid order type' });
       }
       
-      const orders = await storage.getOrdersByType(type);
-      res.json(orders);
+      // Get orders specifically for this type or orders marked as 'both'
+      const ordersForType = await storage.getOrdersByType(type);
+      // Get orders marked as 'both' (should go to both kitchen and bar)
+      const ordersForBoth = await storage.getOrdersByType('both');
+      
+      // Combine the arrays and return all applicable orders
+      const combinedOrders = [...ordersForType, ...ordersForBoth];
+      
+      // Log for debugging
+      console.log(`Fetched ${ordersForType.length} orders for ${type} and ${ordersForBoth.length} 'both' orders`);
+      
+      res.json(combinedOrders);
     } catch (error) {
+      console.error('Error getting orders by type:', error);
       res.status(500).json({ message: 'Failed to get orders' });
     }
   });

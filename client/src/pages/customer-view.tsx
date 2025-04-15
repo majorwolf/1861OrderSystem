@@ -127,7 +127,7 @@ export default function CustomerView() {
                   <div key={item.id} className="border p-3 rounded bg-white">
                     <div className="flex justify-between">
                       <h4 className="font-medium">{item.name}</h4>
-                      <span className="font-semibold">${item.price}</span>
+                      <span className="font-semibold">{item.price}</span>
                     </div>
                     <p className="text-sm text-gray-600 mt-1">{item.description}</p>
                     <button 

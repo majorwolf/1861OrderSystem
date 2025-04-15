@@ -10,6 +10,7 @@ export const menuItems = pgTable("menu_items", {
   price: text("price").notNull(), // Store as text to handle "$12.00+" format
   category: text("category").notNull(), // "pizza", "drink", etc.
   customizable: boolean("customizable").default(false),
+  available: boolean("available").default(true),
 });
 
 export const insertMenuItemSchema = createInsertSchema(menuItems).omit({

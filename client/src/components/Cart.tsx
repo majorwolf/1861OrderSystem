@@ -32,11 +32,18 @@ export default function Cart({ isOpen, onClose }: CartProps) {
       
       // Add price based on size
       if (item.size === "Large") {
-        basePrice += 3;
-      } else if (item.size === "Family") {
-        basePrice += 5;
+        basePrice += 2; // $2 extra for large
       }
       
+      // Add additional toppings pricing
+      if (item.addedToppings && item.addedToppings.length > 0) {
+        item.addedToppings.forEach(topping => {
+          const toppingPrice = parseFloat(topping.price.replace('$', ''));
+          basePrice += toppingPrice;
+        });
+      }
+      
+      // Calculate final price with quantity
       return sum + (basePrice * item.quantity);
     }, 0);
   };
@@ -48,11 +55,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
     const bar: OrderItem[] = [];
     
     items.forEach(item => {
-      if (item.name.toLowerCase().includes("coke") || 
-          item.name.toLowerCase().includes("sprite") || 
-          item.name.toLowerCase().includes("water") ||
-          item.name.toLowerCase().includes("beer") ||
-          item.name.toLowerCase().includes("wine")) {
+      if (item.category === "drink") {
         bar.push(item);
       } else {
         kitchen.push(item);

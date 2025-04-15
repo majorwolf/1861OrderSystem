@@ -185,6 +185,7 @@ export default function PizzaCustomization({ menuItem, onClose, onAddToCart }: P
       price: formattedSinglePrice, // Use the single item price for display in cart
       quantity,
       size,
+      category: menuItem.category,
       notes: notes.trim() || undefined,
       addedToppings: finalAddedToppings,
       removedToppings: finalRemovedToppings

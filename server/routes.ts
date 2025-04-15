@@ -416,5 +416,228 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== TOPPINGS ROUTES =====
+
+  // Get all toppings
+  app.get('/api/toppings', async (req, res) => {
+    try {
+      const allToppings = await storage.getToppings();
+      res.json(allToppings);
+    } catch (error) {
+      console.error('Error getting toppings:', error);
+      res.status(500).json({ message: 'Failed to get toppings' });
+    }
+  });
+
+  // Get toppings by category
+  app.get('/api/toppings/category/:category', async (req, res) => {
+    try {
+      const { category } = req.params;
+      const toppingsByCategory = await storage.getToppingsByCategory(category);
+      res.json(toppingsByCategory);
+    } catch (error) {
+      console.error('Error getting toppings by category:', error);
+      res.status(500).json({ message: 'Failed to get toppings by category' });
+    }
+  });
+
+  // Create a new topping
+  app.post('/api/toppings', async (req, res) => {
+    try {
+      const newTopping = req.body;
+      
+      if (!newTopping.name || !newTopping.price || !newTopping.category) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+      
+      const createdTopping = await storage.createTopping(newTopping);
+      
+      // Broadcast the new topping to all connected clients
+      broadcastToAll({
+        type: 'toppingCreated',
+        payload: createdTopping
+      });
+      
+      res.status(201).json(createdTopping);
+    } catch (error) {
+      console.error('Error creating topping:', error);
+      res.status(500).json({ message: 'Failed to create topping' });
+    }
+  });
+
+  // Update a topping
+  app.put('/api/toppings/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid topping ID' });
+      }
+      
+      const updateData = req.body;
+      if (!updateData.name || !updateData.price || !updateData.category) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+      
+      const updatedTopping = await storage.updateTopping(id, updateData);
+      if (!updatedTopping) {
+        return res.status(404).json({ message: 'Topping not found' });
+      }
+      
+      // Broadcast the updated topping
+      broadcastToAll({
+        type: 'toppingUpdated',
+        payload: updatedTopping
+      });
+      
+      res.json(updatedTopping);
+    } catch (error) {
+      console.error('Error updating topping:', error);
+      res.status(500).json({ message: 'Failed to update topping' });
+    }
+  });
+
+  // Delete a topping
+  app.delete('/api/toppings/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid topping ID' });
+      }
+      
+      const deleted = await storage.deleteTopping(id);
+      if (!deleted) {
+        return res.status(404).json({ message: 'Topping not found' });
+      }
+      
+      // Broadcast the deletion
+      broadcastToAll({
+        type: 'toppingDeleted',
+        payload: { id }
+      });
+      
+      res.json({ message: 'Topping deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting topping:', error);
+      res.status(500).json({ message: 'Failed to delete topping' });
+    }
+  });
+
+  // Update topping availability
+  app.patch('/api/toppings/:id/availability', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid topping ID' });
+      }
+      
+      const { available } = req.body;
+      if (typeof available !== 'boolean') {
+        return res.status(400).json({ message: 'Invalid availability value' });
+      }
+      
+      const updatedTopping = await storage.updateToppingAvailability(id, available);
+      if (!updatedTopping) {
+        return res.status(404).json({ message: 'Topping not found' });
+      }
+      
+      // Broadcast the updated topping
+      broadcastToAll({
+        type: 'toppingUpdated',
+        payload: updatedTopping
+      });
+      
+      res.json(updatedTopping);
+    } catch (error) {
+      console.error('Error updating topping availability:', error);
+      res.status(500).json({ message: 'Failed to update topping availability' });
+    }
+  });
+
+  // ===== MENU ITEM TOPPINGS ROUTES =====
+
+  // Get toppings for a specific menu item
+  app.get('/api/menu/:menuItemId/toppings', async (req, res) => {
+    try {
+      const menuItemId = parseInt(req.params.menuItemId);
+      if (isNaN(menuItemId)) {
+        return res.status(400).json({ message: 'Invalid menu item ID' });
+      }
+      
+      const toppings = await storage.getMenuItemToppings(menuItemId);
+      res.json(toppings);
+    } catch (error) {
+      console.error('Error getting menu item toppings:', error);
+      res.status(500).json({ message: 'Failed to get menu item toppings' });
+    }
+  });
+
+  // Add a topping to a menu item
+  app.post('/api/menu/:menuItemId/toppings/:toppingId', async (req, res) => {
+    try {
+      const menuItemId = parseInt(req.params.menuItemId);
+      const toppingId = parseInt(req.params.toppingId);
+      
+      if (isNaN(menuItemId) || isNaN(toppingId)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const success = await storage.addToppingToMenuItem(menuItemId, toppingId);
+      if (!success) {
+        return res.status(400).json({ message: 'Failed to add topping to menu item' });
+      }
+      
+      // Get the updated list of toppings for the menu item
+      const updatedToppings = await storage.getMenuItemToppings(menuItemId);
+      
+      // Broadcast the update
+      broadcastToAll({
+        type: 'menuItemToppingsUpdated',
+        payload: {
+          menuItemId,
+          toppings: updatedToppings
+        }
+      });
+      
+      res.status(201).json({ menuItemId, toppingId, success: true });
+    } catch (error) {
+      console.error('Error adding topping to menu item:', error);
+      res.status(500).json({ message: 'Failed to add topping to menu item' });
+    }
+  });
+
+  // Remove a topping from a menu item
+  app.delete('/api/menu/:menuItemId/toppings/:toppingId', async (req, res) => {
+    try {
+      const menuItemId = parseInt(req.params.menuItemId);
+      const toppingId = parseInt(req.params.toppingId);
+      
+      if (isNaN(menuItemId) || isNaN(toppingId)) {
+        return res.status(400).json({ message: 'Invalid ID' });
+      }
+      
+      const success = await storage.removeToppingFromMenuItem(menuItemId, toppingId);
+      if (!success) {
+        return res.status(404).json({ message: 'Topping not found on menu item' });
+      }
+      
+      // Get the updated list of toppings for the menu item
+      const updatedToppings = await storage.getMenuItemToppings(menuItemId);
+      
+      // Broadcast the update
+      broadcastToAll({
+        type: 'menuItemToppingsUpdated',
+        payload: {
+          menuItemId,
+          toppings: updatedToppings
+        }
+      });
+      
+      res.json({ menuItemId, toppingId, success: true });
+    } catch (error) {
+      console.error('Error removing topping from menu item:', error);
+      res.status(500).json({ message: 'Failed to remove topping from menu item' });
+    }
+  });
+
   return httpServer;
 }

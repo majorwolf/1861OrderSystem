@@ -40,8 +40,8 @@ export default function CustomerView() {
   
   return (
     <div className="p-8 max-w-4xl mx-auto">
-      {/* Hidden WebSocket handler */}
-      <WebSocketHandler />
+      {/* Temporarily commented out until WebSocket issues are fixed */}
+      {/* <WebSocketHandler /> */}
       
       <h1 className="text-3xl font-bold mb-6">Order for Table {tableId}</h1>
       

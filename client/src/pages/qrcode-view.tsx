@@ -32,8 +32,8 @@ export default function QRCodeView() {
   
   return (
     <div className="p-8 max-w-6xl mx-auto">
-      {/* Hidden WebSocket handler */}
-      <WebSocketHandler />
+      {/* Temporarily commented out until WebSocket issues are fixed */}
+      {/* <WebSocketHandler /> */}
       
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">QR Code Management</h1>

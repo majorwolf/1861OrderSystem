@@ -70,6 +70,8 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {/* The OrderContext provider needs to be here, outside of the routing */}
+      {/* so that all components can access the shared order state */}
       <div className="app-container min-h-screen bg-gray-50">
         {loaded ? (
           <Switch>

@@ -29,7 +29,10 @@ export function WebSocketHandler() {
           case 'newOrder':
             // Add new order
             console.log("Received new order:", data.payload);
-            setOrders((prev: Order[]) => [...prev, data.payload as Order]);
+            setOrders(prevOrders => {
+              const newOrder = data.payload as Order;
+              return [...prevOrders, newOrder];
+            });
             break;
             
           case 'orderUpdated':

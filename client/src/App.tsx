@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Switch, Route, Link } from "wouter";
+import { WebSocketHandler } from "@/components/WebSocketHandler";
 
 // Simple Home Component
 function Home() {
@@ -54,6 +55,17 @@ function Home() {
 // Simple placeholder components for each view
 function TableView({ params }: { params: { tableId: string } }) {
   const tableId = parseInt(params.tableId);
+  const { setTableId } = useOrderContext();
+  
+  useEffect(() => {
+    // Set the table ID in the order context
+    setTableId(tableId);
+    
+    return () => {
+      // Reset the table ID when navigating away
+      setTableId(null);
+    };
+  }, [tableId, setTableId]);
   
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -61,6 +73,9 @@ function TableView({ params }: { params: { tableId: string } }) {
       <div className="bg-white p-6 rounded-lg shadow mb-4">
         <p className="mb-4">Welcome to Pizza Palace!</p>
         <p>This is where customers at table {tableId} would order food and drinks.</p>
+        
+        {/* Add WebSocketHandler component here */}
+        <WebSocketHandler />
       </div>
       <Link href="/">
         <span className="text-blue-600 hover:underline cursor-pointer">← Back to Home</span>

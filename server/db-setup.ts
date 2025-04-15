@@ -11,22 +11,33 @@ import { log } from "./vite";
 export async function setupDatabase() {
   try {
     // Check if tables exist and have data
-    const existingMenuItems = await db.select().from(menuItems);
-    const existingTables = await db.select().from(tables);
-    
-    // Only seed data if tables are empty
-    if (existingMenuItems.length === 0) {
-      log('No menu items found. Seeding initial menu data...');
+    try {
+      const existingMenuItems = await db.select().from(menuItems);
+      
+      // Only seed data if tables are empty
+      if (existingMenuItems.length === 0) {
+        log('No menu items found. Seeding initial menu data...');
+        await seedMenuItems();
+      } else {
+        log(`Found ${existingMenuItems.length} existing menu items. Skipping seeding.`);
+      }
+    } catch (error) {
+      log('Error checking menu items, attempting to seed anyway');
       await seedMenuItems();
-    } else {
-      log(`Found ${existingMenuItems.length} existing menu items. Skipping seeding.`);
     }
     
-    if (existingTables.length === 0) {
-      log('No tables found. Creating initial tables...');
+    try {
+      const existingTables = await db.select().from(tables);
+      
+      if (existingTables.length === 0) {
+        log('No tables found. Creating initial tables...');
+        await seedTables();
+      } else {
+        log(`Found ${existingTables.length} existing tables. Skipping seeding.`);
+      }
+    } catch (error) {
+      log('Error checking tables, attempting to seed anyway');
       await seedTables();
-    } else {
-      log(`Found ${existingTables.length} existing tables. Skipping seeding.`);
     }
     
     log('Database setup complete!');

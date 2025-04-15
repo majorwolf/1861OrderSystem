@@ -143,17 +143,48 @@ export default function CustomerView() {
           )}
         </div>
         
-        {/* Cart will go here */}
+        {/* Cart section */}
         <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-          <h3 className="font-medium mb-2">Your Order</h3>
-          <p>Cart is empty. Add items from the menu to get started.</p>
+          <h3 className="font-semibold text-lg mb-2">Your Order</h3>
+          
+          {cart.length === 0 ? (
+            <p className="text-gray-500">Cart is empty. Add items from the menu to get started.</p>
+          ) : (
+            <>
+              <div className="space-y-2 mb-4">
+                {cart.map((item, index) => (
+                  <div key={index} className="flex justify-between items-center bg-white p-2 rounded">
+                    <div>
+                      <span className="font-medium">{item.quantity}x </span>
+                      <span>{item.name}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span>${(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
+                      <button 
+                        onClick={() => removeFromCart(index)}
+                        className="text-red-500 text-xs px-1.5 py-0.5 border border-red-300 rounded hover:bg-red-50"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex justify-between font-bold border-t pt-2">
+                <span>Total:</span>
+                <span>${calculateTotal()}</span>
+              </div>
+            </>
+          )}
         </div>
         
         {/* Place order button */}
         <div className="mt-6">
           <button 
             className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
-            disabled={true}
+            disabled={cart.length === 0}
+            onClick={() => alert('Order placed! (Not implemented yet)')}
           >
             Place Order
           </button>

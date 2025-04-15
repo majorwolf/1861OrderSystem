@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "wouter";
-import { MenuItem } from "@shared/schema";
+import { MenuItem, OrderItem } from "@shared/schema";
+import MenuItemCard from "@/components/MenuItemCard";
+import CartItem from "@/components/CartItem";
+import { Button } from "@/components/ui/button";
+import { useOrderContext } from "@/context/OrderContext";
 
 // Type for cart items
 interface CartItem {
@@ -22,43 +26,26 @@ export default function CustomerView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // State for cart
-  const [cart, setCart] = useState<CartItem[]>([]);
+  // Get cart from order context
+  const { cart, setTableId, clearCart } = useOrderContext();
   
-  // Add item to cart
-  const addToCart = (item: MenuItem) => {
-    // Check if item is already in cart
-    const existingCartItem = cart.find(cartItem => cartItem.menuItemId === item.id);
-    
-    if (existingCartItem) {
-      // Update quantity if item exists
-      setCart(cart.map(cartItem => 
-        cartItem.menuItemId === item.id 
-          ? { ...cartItem, quantity: cartItem.quantity + 1 } 
-          : cartItem
-      ));
-    } else {
-      // Add new item
-      const newItem: CartItem = {
-        menuItemId: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: 1
-      };
-      setCart([...cart, newItem]);
+  // Set table ID in context when it changes
+  useEffect(() => {
+    if (tableId) {
+      setTableId(tableId);
     }
-  };
-  
-  // Remove item from cart
-  const removeFromCart = (index: number) => {
-    setCart(cart.filter((_, i) => i !== index));
-  };
+  }, [tableId, setTableId]);
   
   // Calculate total price
-  const calculateTotal = () => {
-    return cart.reduce((total, item) => {
-      return total + (parseFloat(item.price) * item.quantity);
-    }, 0).toFixed(2);
+  const calculateTotal = (): string => {
+    let total = 0;
+    
+    cart.forEach(item => {
+      let itemPrice = parseFloat(item.price.replace('$', '').replace('+', ''));
+      total += itemPrice * item.quantity;
+    });
+    
+    return total.toFixed(2);
   };
   
   // Fetch menu items
@@ -129,19 +116,7 @@ export default function CustomerView() {
               <h3 className="font-semibold text-lg">Our Menu</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {menuItems.map(item => (
-                  <div key={item.id} className="border p-3 rounded bg-white">
-                    <div className="flex justify-between">
-                      <h4 className="font-medium">{item.name}</h4>
-                      <span className="font-semibold">{item.price}</span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-                    <button 
-                      className="mt-2 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
-                      onClick={() => addToCart(item)}
-                    >
-                      Add to Cart
-                    </button>
-                  </div>
+                  <MenuItemCard key={item.id} item={item} />
                 ))}
               </div>
             </div>

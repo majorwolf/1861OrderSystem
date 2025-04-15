@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Order } from "@shared/schema";
-import { updateOrderStatus as wsUpdateOrderStatus } from "@/lib/websocket";
+import { updateKitchenStatus as wsUpdateKitchenStatus } from "@/lib/websocket";
 
 export default function KitchenView() {
   const [kitchenOrders, setKitchenOrders] = useState<Order[]>([]);
@@ -40,7 +40,7 @@ export default function KitchenView() {
     return () => clearInterval(intervalId);
   }, []);
   
-  // Calculate order counts by status
+  // Calculate order counts by kitchen status
   const countOrdersByStatus = () => {
     const counts = {
       preparing: 0,
@@ -49,9 +49,9 @@ export default function KitchenView() {
     };
     
     kitchenOrders.forEach(order => {
-      if (order.status === 'preparing') counts.preparing++;
-      if (order.status === 'ready') counts.ready++;
-      if (order.status === 'completed') counts.completed++;
+      if (order.kitchenStatus === 'preparing') counts.preparing++;
+      if (order.kitchenStatus === 'ready') counts.ready++;
+      if (order.kitchenStatus === 'completed') counts.completed++;
     });
     
     return counts;
@@ -134,7 +134,7 @@ export default function KitchenView() {
           <div className="col-span-full bg-white p-6 rounded-lg shadow">
             <p className="text-center text-red-500">{error}</p>
           </div>
-        ) : kitchenOrders.filter(order => !hideCompleted || order.status !== 'completed').length === 0 ? (
+        ) : kitchenOrders.filter(order => !hideCompleted || order.kitchenStatus !== 'completed').length === 0 ? (
           <div className="col-span-full bg-white p-6 rounded-lg shadow">
             <p className="text-center text-gray-500">
               {hideCompleted 
@@ -144,13 +144,13 @@ export default function KitchenView() {
           </div>
         ) : (
           kitchenOrders
-            .filter(order => !hideCompleted || order.status !== 'completed')
+            .filter(order => !hideCompleted || order.kitchenStatus !== 'completed')
             .map(order => (
             <div key={order.id} className="bg-white p-4 rounded-lg shadow">
               <div className="flex justify-between items-center mb-3">
                 <h2 className="text-lg font-semibold">Order #{order.id}</h2>
-                <span className={`px-2 py-1 rounded text-xs ${getStatusClass(order.status)}`}>
-                  {capitalize(order.status)}
+                <span className={`px-2 py-1 rounded text-xs ${getStatusClass(order.kitchenStatus)}`}>
+                  {capitalize(order.kitchenStatus)}
                 </span>
               </div>
               
@@ -208,22 +208,22 @@ export default function KitchenView() {
               <div className="mt-4 pt-3 border-t flex justify-end space-x-2">
                 <button 
                   className="px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600"
-                  onClick={() => updateOrderStatus(order.id, 'preparing')}
-                  disabled={order.status !== 'new'}
+                  onClick={() => updateKitchenStatus(order.id, 'preparing')}
+                  disabled={order.kitchenStatus !== 'new'}
                 >
                   Preparing
                 </button>
                 <button 
                   className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
-                  onClick={() => updateOrderStatus(order.id, 'ready')}
-                  disabled={order.status !== 'preparing'}
+                  onClick={() => updateKitchenStatus(order.id, 'ready')}
+                  disabled={order.kitchenStatus !== 'preparing'}
                 >
                   Ready
                 </button>
                 <button 
                   className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
-                  onClick={() => updateOrderStatus(order.id, 'completed')}
-                  disabled={order.status !== 'ready'}
+                  onClick={() => updateKitchenStatus(order.id, 'completed')}
+                  disabled={order.kitchenStatus !== 'ready'}
                 >
                   Delivered
                 </button>
@@ -261,11 +261,11 @@ function getStatusClass(status: string): string {
   }
 }
 
-function updateOrderStatus(orderId: number, status: string) {
-  console.log(`Updating order ${orderId} to status: ${status}`);
+function updateKitchenStatus(orderId: number, status: string) {
+  console.log(`Updating order ${orderId} kitchen status to: ${status}`);
   
   // First update via REST API directly
-  fetch(`/api/orders/${orderId}/status`, {
+  fetch(`/api/orders/${orderId}/kitchen-status`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json'
@@ -274,18 +274,18 @@ function updateOrderStatus(orderId: number, status: string) {
   })
   .then(res => {
     if (!res.ok) {
-      throw new Error('Failed to update order status');
+      throw new Error('Failed to update kitchen status');
     }
     return res.json();
   })
   .then(updatedOrder => {
-    console.log('Order status updated successfully:', updatedOrder);
+    console.log('Kitchen status updated successfully:', updatedOrder);
     
     // Also send via WebSocket for real-time updates to other clients
-    wsUpdateOrderStatus(orderId, status);
+    wsUpdateKitchenStatus(orderId, status);
   })
   .catch(err => {
-    console.error('Error updating order status:', err);
-    alert('Failed to update order status. Please try again.');
+    console.error('Error updating kitchen status:', err);
+    alert('Failed to update kitchen status. Please try again.');
   });
 }

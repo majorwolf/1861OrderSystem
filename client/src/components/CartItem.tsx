@@ -37,6 +37,23 @@ export default function CartItem({ item, index }: CartItemProps) {
         {item.size && (
           <span className="text-sm text-gray-500">{item.size}</span>
         )}
+        
+        {/* Show added toppings */}
+        {item.addedToppings && item.addedToppings.length > 0 && (
+          <div className="text-sm text-gray-600 mt-1">
+            <span className="font-medium">Added:</span>{' '}
+            {item.addedToppings.map(topping => topping.name).join(', ')}
+          </div>
+        )}
+        
+        {/* Show removed toppings */}
+        {item.removedToppings && item.removedToppings.length > 0 && (
+          <div className="text-sm text-gray-600 mt-1">
+            <span className="font-medium">Removed:</span>{' '}
+            {item.removedToppings.map(topping => topping.name).join(', ')}
+          </div>
+        )}
+        
         {item.notes && (
           <p className="text-sm text-gray-500 mt-1">{item.notes}</p>
         )}

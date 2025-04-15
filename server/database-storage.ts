@@ -4,7 +4,7 @@ import {
   MenuItem, InsertMenuItem, 
   Table, InsertTable, 
   Order, InsertOrder,
-  OrderStatusUpdate,
+  OrderStatusUpdate, KitchenStatusUpdate, BarStatusUpdate,
   Topping, InsertTopping,
   MenuItemTopping, InsertMenuItemTopping,
   menuItems,
@@ -221,7 +221,29 @@ export class DatabaseStorage implements IStorage {
   
   async updateOrderStatus(update: OrderStatusUpdate): Promise<Order | undefined> {
     const updatedOrders = await db.update(orders)
-      .set({ status: update.status })
+      .set({ 
+        status: update.status,
+        kitchenStatus: update.status,
+        barStatus: update.status 
+      })
+      .where(eq(orders.id, update.id))
+      .returning();
+    
+    return updatedOrders.length > 0 ? updatedOrders[0] : undefined;
+  }
+
+  async updateKitchenStatus(update: KitchenStatusUpdate): Promise<Order | undefined> {
+    const updatedOrders = await db.update(orders)
+      .set({ kitchenStatus: update.status })
+      .where(eq(orders.id, update.id))
+      .returning();
+    
+    return updatedOrders.length > 0 ? updatedOrders[0] : undefined;
+  }
+
+  async updateBarStatus(update: BarStatusUpdate): Promise<Order | undefined> {
+    const updatedOrders = await db.update(orders)
+      .set({ barStatus: update.status })
       .where(eq(orders.id, update.id))
       .returning();
     

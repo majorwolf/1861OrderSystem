@@ -2,7 +2,7 @@ import {
   MenuItem, InsertMenuItem, 
   Table, InsertTable, 
   Order, InsertOrder,
-  OrderStatusUpdate,
+  OrderStatusUpdate, KitchenStatusUpdate, BarStatusUpdate,
   Topping, InsertTopping,
   MenuItemTopping, InsertMenuItemTopping,
   menuItems, toppings, menuItemToppings

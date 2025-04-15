@@ -120,12 +120,14 @@ export default function BarView() {
               
               <h3 className="font-medium mb-2 border-t pt-2">Drinks:</h3>
               <ul className="space-y-2">
-                {order.items.map((item, index) => (
-                  <li key={index} className="flex justify-between">
-                    <span>{item.quantity}x {item.name}</span>
-                    <span>{item.size && `(${item.size})`}</span>
-                  </li>
-                ))}
+                {order.items
+                  .filter(item => item.category === "drink")
+                  .map((item, index) => (
+                    <li key={index} className="flex justify-between">
+                      <span>{item.quantity}x {item.name}</span>
+                      <span>{item.size && `(${item.size})`}</span>
+                    </li>
+                  ))}
               </ul>
               
               {order.notes && (

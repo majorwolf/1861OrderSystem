@@ -32,7 +32,12 @@ export default function CartItem({ item, index }: CartItemProps) {
       <div className="flex-grow">
         <div className="flex justify-between">
           <span className="font-medium">{item.quantity}× {item.name}</span>
-          <span className="font-medium">${calculatePrice(item)}</span>
+          <div className="text-right">
+            <span className="font-medium">${calculatePrice(item)}</span>
+            <div className="text-xs text-gray-500">
+              ${calculateUnitPrice(item)} each
+            </div>
+          </div>
         </div>
         {item.size && (
           <span className="text-sm text-gray-500">{item.size}</span>
@@ -73,14 +78,14 @@ export default function CartItem({ item, index }: CartItemProps) {
   );
 }
 
-// Helper function to calculate total price based on quantity and size
-function calculatePrice(item: OrderItem): string {
+// Helper function to calculate unit price
+function calculateUnitPrice(item: OrderItem): string {
   // Parse the base price removing the $ and any + sign
   let basePrice = parseFloat(item.price.replace('$', '').replace('+', ''));
   
   // Add price based on size
   if (item.size === "Large") {
-    basePrice += 2; // Match the same $2 pricing from customization
+    basePrice += 2; // $2 extra for large
   }
   
   // Add cost of additional toppings if present
@@ -90,7 +95,14 @@ function calculatePrice(item: OrderItem): string {
     });
   }
   
+  return basePrice.toFixed(2);
+}
+
+// Helper function to calculate total price based on quantity and size
+function calculatePrice(item: OrderItem): string {
+  const unitPrice = parseFloat(calculateUnitPrice(item));
+  
   // Calculate total with quantity
-  const totalPrice = (basePrice * item.quantity).toFixed(2);
+  const totalPrice = (unitPrice * item.quantity).toFixed(2);
   return totalPrice;
 }

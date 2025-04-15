@@ -25,13 +25,13 @@ export default function MenuItemCard({ item }: MenuItemCardProps) {
   
   const handleAddToCart = () => {
     if (quantity > 0) {
-      // If it's a customizable item, show the customization modal
-      if (item.customizable) {
+      // If it's a pizza, show the customization modal regardless
+      if (item.category === "pizza") {
         setShowCustomizationModal(true);
         return;
       }
       
-      // Otherwise, add directly to cart
+      // For non-pizza items, add directly to cart
       const orderItem: OrderItem = {
         menuItemId: item.id,
         name: item.name,
@@ -99,10 +99,10 @@ export default function MenuItemCard({ item }: MenuItemCardProps) {
             <Button 
               onClick={handleAddToCart} 
               disabled={quantity === 0}
-              variant={item.customizable ? "outline" : "default"}
-              className={item.customizable ? "bg-yellow-500 hover:bg-yellow-600 text-white" : "bg-primary hover:bg-red-700"}
+              variant={item.category === "pizza" ? "outline" : "default"}
+              className={item.category === "pizza" ? "bg-yellow-500 hover:bg-yellow-600 text-white" : "bg-primary hover:bg-red-700"}
             >
-              {item.customizable ? "Customize" : "Add to Order"}
+              {item.category === "pizza" ? "Customize" : "Add to Order"}
             </Button>
           </div>
         </CardContent>

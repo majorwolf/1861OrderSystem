@@ -19,7 +19,11 @@ export default function BarView() {
           throw new Error('Failed to fetch bar orders');
         }
         const data = await response.json();
-        setBarOrders(data);
+        // Sort orders by creation time (newest first)
+        const sortedOrders = [...data].sort((a, b) => {
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        });
+        setBarOrders(sortedOrders);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching bar orders:', err);
@@ -36,6 +40,25 @@ export default function BarView() {
     return () => clearInterval(intervalId);
   }, []);
   
+  // Calculate order counts by status
+  const countOrdersByStatus = () => {
+    const counts = {
+      preparing: 0,
+      ready: 0,
+      completed: 0
+    };
+    
+    barOrders.forEach(order => {
+      if (order.status === 'preparing') counts.preparing++;
+      if (order.status === 'ready') counts.ready++;
+      if (order.status === 'completed') counts.completed++;
+    });
+    
+    return counts;
+  };
+  
+  const statusCounts = countOrdersByStatus();
+
   return (
     <div className="p-8 max-w-6xl mx-auto">
       {/* Temporarily commented out until WebSocket issues are fixed */}

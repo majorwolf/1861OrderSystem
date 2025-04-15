@@ -19,7 +19,11 @@ export default function KitchenView() {
           throw new Error('Failed to fetch kitchen orders');
         }
         const data = await response.json();
-        setKitchenOrders(data);
+        // Sort orders by creation time (newest first)
+        const sortedOrders = [...data].sort((a, b) => {
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        });
+        setKitchenOrders(sortedOrders);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching kitchen orders:', err);
@@ -36,6 +40,25 @@ export default function KitchenView() {
     return () => clearInterval(intervalId);
   }, []);
   
+  // Calculate order counts by status
+  const countOrdersByStatus = () => {
+    const counts = {
+      preparing: 0,
+      ready: 0,
+      completed: 0
+    };
+    
+    kitchenOrders.forEach(order => {
+      if (order.status === 'preparing') counts.preparing++;
+      if (order.status === 'ready') counts.ready++;
+      if (order.status === 'completed') counts.completed++;
+    });
+    
+    return counts;
+  };
+  
+  const statusCounts = countOrdersByStatus();
+
   return (
     <div className="p-8 max-w-6xl mx-auto">
       {/* Temporarily commented out until WebSocket issues are fixed */}
@@ -70,7 +93,7 @@ export default function KitchenView() {
       </div>
       
       {/* Add CSS for toggle switch */}
-      <style jsx>{`
+      <style>{`
         .toggle-checkbox:checked {
           right: 0;
           border-color: #68D391;
@@ -85,6 +108,22 @@ export default function KitchenView() {
           border-color: #CBD5E0;
         }
       `}</style>
+      
+      {/* Order Status Summary */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+          <h3 className="text-yellow-700 font-semibold text-lg">Preparing</h3>
+          <p className="text-3xl font-bold text-yellow-600">{statusCounts.preparing}</p>
+        </div>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+          <h3 className="text-green-700 font-semibold text-lg">Ready</h3>
+          <p className="text-3xl font-bold text-green-600">{statusCounts.ready}</p>
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+          <h3 className="text-blue-700 font-semibold text-lg">Delivered</h3>
+          <p className="text-3xl font-bold text-blue-600">{statusCounts.completed}</p>
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (

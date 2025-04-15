@@ -11,6 +11,12 @@ interface NewMenuItem {
   customizable: boolean;
 }
 
+// Type for editing a menu item
+interface EditMenuItem extends NewMenuItem {
+  id: number;
+  available: boolean;
+}
+
 export default function AdminView() {
   // State for menu items
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -33,6 +39,10 @@ export default function AdminView() {
   });
   const [addingItem, setAddingItem] = useState(false);
   const [deletingItem, setDeletingItem] = useState<number | null>(null);
+  
+  // State for edit functionality
+  const [editingItem, setEditingItem] = useState<EditMenuItem | null>(null);
+  const [updatingItem, setUpdatingItem] = useState(false);
   
   // Fetch menu items
   useEffect(() => {
@@ -274,6 +284,97 @@ export default function AdminView() {
       setNewItem(prev => ({ ...prev, [name]: checked }));
     } else {
       setNewItem(prev => ({ ...prev, [name]: value }));
+    }
+  };
+  
+  // Handle input changes for edit form
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    if (!editingItem) return;
+    
+    const { name, value, type } = e.target;
+    
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setEditingItem(prev => prev ? { ...prev, [name]: checked } : null);
+    } else {
+      setEditingItem(prev => prev ? { ...prev, [name]: value } : null);
+    }
+  };
+  
+  // Function to start editing an item
+  const startEditingItem = (item: MenuItem) => {
+    setEditingItem({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      category: item.category,
+      customizable: item.customizable || false,
+      available: item.available !== false
+    });
+  };
+  
+  // Function to cancel editing
+  const cancelEditing = () => {
+    setEditingItem(null);
+  };
+  
+  // Function to update a menu item
+  const updateMenuItem = async () => {
+    if (!editingItem || !editingItem.name || !editingItem.description || !editingItem.price) {
+      setError('Please fill in all required fields');
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+    
+    try {
+      setUpdatingItem(true);
+      
+      const response = await fetch(`/api/menu/${editingItem.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editingItem),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update menu item');
+      }
+      
+      const updatedItem = await response.json();
+      
+      // Update the menu items state with the updated item
+      setMenuItems(prev => 
+        prev.map(item => 
+          item.id === updatedItem.id ? updatedItem : item
+        )
+      );
+      
+      // Update unavailable items set if availability changed
+      if (!updatedItem.available) {
+        setUnavailableItems(prev => {
+          const newSet = new Set(prev);
+          newSet.add(updatedItem.id);
+          return newSet;
+        });
+      } else {
+        setUnavailableItems(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(updatedItem.id);
+          return newSet;
+        });
+      }
+      
+      setSuccessMessage('Menu item updated successfully!');
+      setEditingItem(null);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error('Error updating menu item:', err);
+      setError('Failed to update menu item. Please try again.');
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setUpdatingItem(false);
     }
   };
 

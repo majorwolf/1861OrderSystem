@@ -114,6 +114,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update menu item availability
+  app.post('/api/menu/update-availability', async (req, res) => {
+    try {
+      const updates = req.body;
+      if (!Array.isArray(updates)) {
+        return res.status(400).json({ message: 'Invalid request data. Expected an array.' });
+      }
+      
+      const results = await Promise.all(
+        updates.map(async (update) => {
+          if (typeof update.id !== 'number' || typeof update.available !== 'boolean') {
+            throw new Error('Invalid update format');
+          }
+          return await storage.updateMenuItemAvailability(update.id, update.available);
+        })
+      );
+      
+      res.status(200).json({ 
+        message: 'Menu item availability updated successfully', 
+        updatedItems: results.filter(Boolean) 
+      });
+    } catch (error) {
+      console.error('Error updating menu item availability:', error);
+      res.status(500).json({ message: 'Failed to update menu item availability' });
+    }
+  });
+  
   // Get menu items by category
   app.get('/api/menu/:category', async (req, res) => {
     try {

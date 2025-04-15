@@ -9,6 +9,7 @@ import CustomerView from "./pages/customer-view";
 import KitchenView from "./pages/kitchen-view";
 import BarView from "./pages/bar-view";
 import QRCodeView from "./pages/qrcode-view";
+import AdminView from "./pages/admin-view";
 import NotFound from "./pages/not-found";
 
 // Simple Home Component
@@ -51,6 +52,12 @@ function Home() {
                 QR Code Management
               </span>
             </Link>
+            
+            <Link href="/admin/menu">
+              <span className="inline-block bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 cursor-pointer">
+                Menu Availability
+              </span>
+            </Link>
           </div>
         </div>
       </div>
@@ -80,6 +87,7 @@ function App() {
             <Route path="/kitchen" component={KitchenView} /> 
             <Route path="/bar" component={BarView} />
             <Route path="/admin/qrcodes" component={QRCodeView} />
+            <Route path="/admin/menu" component={AdminView} />
             <Route component={NotFound} />
           </Switch>
         ) : (

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Order } from "@shared/schema";
-import { updateOrderStatus as wsUpdateOrderStatus } from "@/lib/websocket";
+import { updateBarStatus as wsUpdateBarStatus } from "@/lib/websocket";
 
 export default function BarView() {
   const [barOrders, setBarOrders] = useState<Order[]>([]);
@@ -40,7 +40,7 @@ export default function BarView() {
     return () => clearInterval(intervalId);
   }, []);
   
-  // Calculate order counts by status
+  // Calculate order counts by bar status
   const countOrdersByStatus = () => {
     const counts = {
       preparing: 0,
@@ -49,9 +49,9 @@ export default function BarView() {
     };
     
     barOrders.forEach(order => {
-      if (order.status === 'preparing') counts.preparing++;
-      if (order.status === 'ready') counts.ready++;
-      if (order.status === 'completed') counts.completed++;
+      if (order.barStatus === 'preparing') counts.preparing++;
+      if (order.barStatus === 'ready') counts.ready++;
+      if (order.barStatus === 'completed') counts.completed++;
     });
     
     return counts;
@@ -134,7 +134,7 @@ export default function BarView() {
           <div className="col-span-full bg-white p-6 rounded-lg shadow">
             <p className="text-center text-red-500">{error}</p>
           </div>
-        ) : barOrders.filter(order => !hideCompleted || order.status !== 'completed').length === 0 ? (
+        ) : barOrders.filter(order => !hideCompleted || order.barStatus !== 'completed').length === 0 ? (
           <div className="col-span-full bg-white p-6 rounded-lg shadow">
             <p className="text-center text-gray-500">
               {hideCompleted 
@@ -144,13 +144,13 @@ export default function BarView() {
           </div>
         ) : (
           barOrders
-            .filter(order => !hideCompleted || order.status !== 'completed')
+            .filter(order => !hideCompleted || order.barStatus !== 'completed')
             .map(order => (
             <div key={order.id} className="bg-white p-4 rounded-lg shadow">
               <div className="flex justify-between items-center mb-3">
                 <h2 className="text-lg font-semibold">Order #{order.id}</h2>
-                <span className={`px-2 py-1 rounded text-xs ${getStatusClass(order.status)}`}>
-                  {capitalize(order.status)}
+                <span className={`px-2 py-1 rounded text-xs ${getStatusClass(order.barStatus)}`}>
+                  {capitalize(order.barStatus)}
                 </span>
               </div>
               
@@ -179,22 +179,22 @@ export default function BarView() {
               <div className="mt-4 pt-3 border-t flex justify-end space-x-2">
                 <button 
                   className="px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600"
-                  onClick={() => updateOrderStatus(order.id, 'preparing')}
-                  disabled={order.status !== 'new'}
+                  onClick={() => updateBarStatus(order.id, 'preparing')}
+                  disabled={order.barStatus !== 'new'}
                 >
                   Preparing
                 </button>
                 <button 
                   className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
-                  onClick={() => updateOrderStatus(order.id, 'ready')}
-                  disabled={order.status !== 'preparing'}
+                  onClick={() => updateBarStatus(order.id, 'ready')}
+                  disabled={order.barStatus !== 'preparing'}
                 >
                   Ready
                 </button>
                 <button 
                   className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
-                  onClick={() => updateOrderStatus(order.id, 'completed')}
-                  disabled={order.status !== 'ready'}
+                  onClick={() => updateBarStatus(order.id, 'completed')}
+                  disabled={order.barStatus !== 'ready'}
                 >
                   Delivered
                 </button>
@@ -232,11 +232,11 @@ function getStatusClass(status: string): string {
   }
 }
 
-function updateOrderStatus(orderId: number, status: string) {
-  console.log(`Updating order ${orderId} to status: ${status}`);
+function updateBarStatus(orderId: number, status: string) {
+  console.log(`Updating order ${orderId} bar status to: ${status}`);
   
   // First update via REST API directly
-  fetch(`/api/orders/${orderId}/status`, {
+  fetch(`/api/orders/${orderId}/bar-status`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json'
@@ -245,18 +245,18 @@ function updateOrderStatus(orderId: number, status: string) {
   })
   .then(res => {
     if (!res.ok) {
-      throw new Error('Failed to update order status');
+      throw new Error('Failed to update bar status');
     }
     return res.json();
   })
   .then(updatedOrder => {
-    console.log('Order status updated successfully:', updatedOrder);
+    console.log('Bar status updated successfully:', updatedOrder);
     
     // Also send via WebSocket for real-time updates to other clients
-    wsUpdateOrderStatus(orderId, status);
+    wsUpdateBarStatus(orderId, status);
   })
   .catch(err => {
-    console.error('Error updating order status:', err);
-    alert('Failed to update order status. Please try again.');
+    console.error('Error updating bar status:', err);
+    alert('Failed to update bar status. Please try again.');
   });
 }

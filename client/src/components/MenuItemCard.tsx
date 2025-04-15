@@ -37,7 +37,8 @@ export default function MenuItemCard({ item }: MenuItemCardProps) {
         name: item.name,
         quantity,
         price: item.price,
-        size
+        size,
+        category: item.category
       };
       
       addToCart(orderItem);

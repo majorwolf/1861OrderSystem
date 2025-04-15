@@ -84,6 +84,7 @@ export interface OrderItem {
   price: string;
   notes?: string;
   size?: string; // "Regular", "Large", etc.
+  category?: string; // "pizza", "drink", etc.
   addedToppings?: ToppingItem[]; // Toppings added to the pizza
   removedToppings?: ToppingItem[]; // Toppings removed from the pizza
 }

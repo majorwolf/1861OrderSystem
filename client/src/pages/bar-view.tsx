@@ -43,10 +43,48 @@ export default function BarView() {
       
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Bar Orders</h1>
-        <Link href="/">
-          <span className="text-blue-600 hover:underline cursor-pointer">← Back to Home</span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center">
+            <label htmlFor="hideCompleted" className="mr-2 text-sm font-medium">
+              Hide Delivered
+            </label>
+            <div className="relative inline-block w-10 mr-2 align-middle select-none">
+              <input 
+                type="checkbox" 
+                id="hideCompleted" 
+                name="hideCompleted"
+                checked={hideCompleted}
+                onChange={() => setHideCompleted(!hideCompleted)}
+                className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+              />
+              <label 
+                htmlFor="hideCompleted" 
+                className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${hideCompleted ? 'bg-green-400' : 'bg-gray-300'}`}
+              ></label>
+            </div>
+          </div>
+          <Link href="/">
+            <span className="text-blue-600 hover:underline cursor-pointer">← Back to Home</span>
+          </Link>
+        </div>
       </div>
+      
+      {/* Add CSS for toggle switch */}
+      <style>{`
+        .toggle-checkbox:checked {
+          right: 0;
+          border-color: #68D391;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+          background-color: #68D391;
+        }
+        .toggle-checkbox {
+          right: 0;
+          transition: all 0.3s;
+          left: 0;
+          border-color: #CBD5E0;
+        }
+      `}</style>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
@@ -57,12 +95,18 @@ export default function BarView() {
           <div className="col-span-full bg-white p-6 rounded-lg shadow">
             <p className="text-center text-red-500">{error}</p>
           </div>
-        ) : barOrders.length === 0 ? (
+        ) : barOrders.filter(order => !hideCompleted || order.status !== 'completed').length === 0 ? (
           <div className="col-span-full bg-white p-6 rounded-lg shadow">
-            <p className="text-center text-gray-500">No drink orders at the moment.</p>
+            <p className="text-center text-gray-500">
+              {hideCompleted 
+                ? "No active drink orders at the moment."
+                : "No drink orders at the moment."}
+            </p>
           </div>
         ) : (
-          barOrders.map(order => (
+          barOrders
+            .filter(order => !hideCompleted || order.status !== 'completed')
+            .map(order => (
             <div key={order.id} className="bg-white p-4 rounded-lg shadow">
               <div className="flex justify-between items-center mb-3">
                 <h2 className="text-lg font-semibold">Order #{order.id}</h2>
@@ -111,7 +155,7 @@ export default function BarView() {
                   onClick={() => updateOrderStatus(order.id, 'completed')}
                   disabled={order.status !== 'ready'}
                 >
-                  Complete
+                  Delivered
                 </button>
               </div>
             </div>
@@ -148,10 +192,30 @@ function getStatusClass(status: string): string {
 }
 
 function updateOrderStatus(orderId: number, status: string) {
-  // This should use the websocket function from websocket.ts
-  // For now, we'll just add a console.log placeholder
   console.log(`Updating order ${orderId} to status: ${status}`);
   
-  // Call the updateOrderStatus function from the websocket lib
-  // updateOrderStatus(orderId, status);
+  // First update via REST API directly
+  fetch(`/api/orders/${orderId}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ status })
+  })
+  .then(res => {
+    if (!res.ok) {
+      throw new Error('Failed to update order status');
+    }
+    return res.json();
+  })
+  .then(updatedOrder => {
+    console.log('Order status updated successfully:', updatedOrder);
+    
+    // Also send via WebSocket for real-time updates to other clients
+    wsUpdateOrderStatus(orderId, status);
+  })
+  .catch(err => {
+    console.error('Error updating order status:', err);
+    alert('Failed to update order status. Please try again.');
+  });
 }

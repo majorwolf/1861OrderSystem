@@ -3,7 +3,13 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Switch, Route, Link } from "wouter";
-import { WebSocketHandler } from "@/components/WebSocketHandler";
+
+// Import page components
+import CustomerView from "./pages/customer-view";
+import KitchenView from "./pages/kitchen-view";
+import BarView from "./pages/bar-view";
+import QRCodeView from "./pages/qrcode-view";
+import NotFound from "./pages/not-found";
 
 // Simple Home Component
 function Home() {
@@ -52,93 +58,7 @@ function Home() {
   );
 }
 
-// Simple placeholder components for each view
-function TableView({ params }: { params: { tableId: string } }) {
-  const tableId = parseInt(params.tableId);
-  const { setTableId } = useOrderContext();
-  
-  useEffect(() => {
-    // Set the table ID in the order context
-    setTableId(tableId);
-    
-    return () => {
-      // Reset the table ID when navigating away
-      setTableId(null);
-    };
-  }, [tableId, setTableId]);
-  
-  return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Order for Table {tableId}</h1>
-      <div className="bg-white p-6 rounded-lg shadow mb-4">
-        <p className="mb-4">Welcome to Pizza Palace!</p>
-        <p>This is where customers at table {tableId} would order food and drinks.</p>
-        
-        {/* Add WebSocketHandler component here */}
-        <WebSocketHandler />
-      </div>
-      <Link href="/">
-        <span className="text-blue-600 hover:underline cursor-pointer">← Back to Home</span>
-      </Link>
-    </div>
-  );
-}
-
-function KitchenView() {
-  return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Kitchen View</h1>
-      <div className="bg-white p-6 rounded-lg shadow mb-4">
-        <p>This is where kitchen staff would see food orders.</p>
-      </div>
-      <Link href="/">
-        <span className="text-blue-600 hover:underline cursor-pointer">← Back to Home</span>
-      </Link>
-    </div>
-  );
-}
-
-function BarView() {
-  return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Bar View</h1>
-      <div className="bg-white p-6 rounded-lg shadow mb-4">
-        <p>This is where bar staff would see drink orders.</p>
-      </div>
-      <Link href="/">
-        <span className="text-blue-600 hover:underline cursor-pointer">← Back to Home</span>
-      </Link>
-    </div>
-  );
-}
-
-function QRCodeView() {
-  return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">QR Code Management</h1>
-      <div className="bg-white p-6 rounded-lg shadow mb-4">
-        <p>This is where staff would manage table QR codes.</p>
-      </div>
-      <Link href="/">
-        <span className="text-blue-600 hover:underline cursor-pointer">← Back to Home</span>
-      </Link>
-    </div>
-  );
-}
-
-function NotFound() {
-  return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Page Not Found</h1>
-      <div className="bg-white p-6 rounded-lg shadow mb-4">
-        <p>The page you're looking for doesn't exist.</p>
-      </div>
-      <Link href="/">
-        <span className="text-blue-600 hover:underline cursor-pointer">← Back to Home</span>
-      </Link>
-    </div>
-  );
-}
+// All component implementations have been moved to their own files in the pages directory
 
 function App() {
   const [loaded, setLoaded] = useState(false);
@@ -154,7 +74,7 @@ function App() {
         {loaded ? (
           <Switch>
             <Route path="/" component={Home} />
-            <Route path="/table/:tableId" component={TableView} />
+            <Route path="/table/:tableId" component={CustomerView} />
             <Route path="/kitchen" component={KitchenView} /> 
             <Route path="/bar" component={BarView} />
             <Route path="/admin/qrcodes" component={QRCodeView} />

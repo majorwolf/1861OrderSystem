@@ -1,18 +1,38 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { useOrderContext } from "@/context/OrderContext";
-import { WebSocketHandler } from "@/components/WebSocketHandler";
 import { Order } from "@shared/schema";
 
 export default function KitchenView() {
-  const { orders } = useOrderContext();
   const [kitchenOrders, setKitchenOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // Filter orders that are for the kitchen (food items)
+  // Fetch kitchen orders directly from API
   useEffect(() => {
-    const foodOrders = orders.filter(order => order.type === 'kitchen');
-    setKitchenOrders(foodOrders);
-  }, [orders]);
+    async function fetchKitchenOrders() {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/orders/type/kitchen');
+        if (!response.ok) {
+          throw new Error('Failed to fetch kitchen orders');
+        }
+        const data = await response.json();
+        setKitchenOrders(data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching kitchen orders:', err);
+        setError('Failed to load kitchen orders. Please try again.');
+        setLoading(false);
+      }
+    }
+    
+    fetchKitchenOrders();
+    
+    // Set up polling to refresh orders every 10 seconds
+    const intervalId = setInterval(fetchKitchenOrders, 10000);
+    
+    return () => clearInterval(intervalId);
+  }, []);
   
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -27,7 +47,15 @@ export default function KitchenView() {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {kitchenOrders.length === 0 ? (
+        {loading ? (
+          <div className="col-span-full bg-white p-6 rounded-lg shadow">
+            <p className="text-center">Loading orders...</p>
+          </div>
+        ) : error ? (
+          <div className="col-span-full bg-white p-6 rounded-lg shadow">
+            <p className="text-center text-red-500">{error}</p>
+          </div>
+        ) : kitchenOrders.length === 0 ? (
           <div className="col-span-full bg-white p-6 rounded-lg shadow">
             <p className="text-center text-gray-500">No kitchen orders at the moment.</p>
           </div>

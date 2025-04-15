@@ -66,20 +66,73 @@ export default function AdminView() {
     fetchMenuItems();
   }, []);
   
-  // Toggle item availability
-  const toggleItemAvailability = (itemId: number) => {
-    setUnavailableItems(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(itemId)) {
-        newSet.delete(itemId);
-      } else {
-        newSet.add(itemId);
+  // Toggle item availability 
+  const toggleItemAvailability = async (itemId: number) => {
+    try {
+      // Find the item
+      const item = menuItems.find(item => item.id === itemId);
+      if (!item) {
+        console.error('Item not found:', itemId);
+        return;
       }
-      return newSet;
-    });
+      
+      // Update locally first for immediate feedback
+      setUnavailableItems(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(itemId)) {
+          newSet.delete(itemId);
+        } else {
+          newSet.add(itemId);
+        }
+        return newSet;
+      });
+      
+      // Send the update to the server immediately
+      const available = !unavailableItems.has(itemId);
+      console.log(`Toggling item ${itemId} to available=${available}`);
+      
+      const response = await fetch('/api/menu/update-availability', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([{ id: itemId, available }]),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update menu item');
+      }
+      
+      // Update the menuItems state with the new availability
+      setMenuItems(prev => 
+        prev.map(item => 
+          item.id === itemId 
+            ? { ...item, available } 
+            : item
+        )
+      );
+      
+      setSuccessMessage(`Menu item "${item.name}" availability updated successfully!`);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error('Error updating menu item:', err);
+      setError('Failed to update menu item. Please try again.');
+      setTimeout(() => setError(null), 3000);
+      
+      // Revert the local change if the server update failed
+      setUnavailableItems(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(itemId)) {
+          newSet.delete(itemId);
+        } else {
+          newSet.add(itemId);
+        }
+        return newSet;
+      });
+    }
   };
   
-  // Save changes to the server
+  // Save all changes to the server
   const saveChanges = async () => {
     try {
       setSavingChanges(true);
@@ -89,6 +142,8 @@ export default function AdminView() {
         id: item.id,
         available: !unavailableItems.has(item.id)
       }));
+      
+      console.log('Sending batch update:', updatedItems);
       
       // Send the update to the server
       const response = await fetch('/api/menu/update-availability', {
@@ -103,7 +158,26 @@ export default function AdminView() {
         throw new Error('Failed to update menu items');
       }
       
-      setSuccessMessage('Menu items availability updated successfully!');
+      const result = await response.json();
+      console.log('Update result:', result);
+      
+      // Refresh the menu items to ensure we have the latest data
+      const refreshResponse = await fetch('/api/menu');
+      if (refreshResponse.ok) {
+        const data = await refreshResponse.json();
+        setMenuItems(data);
+        
+        // Update the unavailable items set
+        const newUnavailableItems = new Set<number>();
+        data.forEach((item: MenuItem) => {
+          if (item.available === false) {
+            newUnavailableItems.add(item.id);
+          }
+        });
+        setUnavailableItems(newUnavailableItems);
+      }
+      
+      setSuccessMessage('All menu items availability updated successfully!');
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       console.error('Error updating menu items:', err);

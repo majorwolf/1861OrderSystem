@@ -71,7 +71,12 @@ export default function CustomerView() {
           throw new Error('Failed to fetch menu items');
         }
         const data = await response.json();
-        setMenuItems(data);
+        
+        // Filter out unavailable items for the customer view
+        const availableItems = data.filter((item: MenuItem) => item.available !== false);
+        console.log('Filtered available items:', availableItems);
+        
+        setMenuItems(availableItems);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching menu items:', err);

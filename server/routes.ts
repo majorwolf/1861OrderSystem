@@ -118,22 +118,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/menu/update-availability', async (req, res) => {
     try {
       const updates = req.body;
+      console.log('Received batch update request:', updates);
+      
       if (!Array.isArray(updates)) {
         return res.status(400).json({ message: 'Invalid request data. Expected an array.' });
       }
       
-      const results = await Promise.all(
-        updates.map(async (update) => {
-          if (typeof update.id !== 'number' || typeof update.available !== 'boolean') {
-            throw new Error('Invalid update format');
-          }
-          return await storage.updateMenuItemAvailability(update.id, update.available);
-        })
-      );
+      const updatePromises = [];
+      for (const update of updates) {
+        if (typeof update.id !== 'number' || typeof update.available !== 'boolean') {
+          console.warn('Invalid update format:', update);
+          continue;
+        }
+        
+        console.log(`Updating item ${update.id} to available=${update.available}`);
+        updatePromises.push(storage.updateMenuItemAvailability(update.id, update.available));
+      }
       
+      const results = await Promise.all(updatePromises);
+      const validResults = results.filter(Boolean);
+      
+      // Broadcast the menu updates to all connected clients
+      broadcastToAll({
+        type: 'menuUpdated',
+        payload: {
+          action: 'batchUpdated',
+          items: validResults
+        }
+      });
+      
+      console.log(`Successfully updated ${validResults.length} menu items`);
       res.status(200).json({ 
         message: 'Menu item availability updated successfully', 
-        updatedItems: results.filter(Boolean) 
+        updatedItems: validResults 
       });
     } catch (error) {
       console.error('Error updating menu item availability:', error);
@@ -146,13 +163,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Validate the menu item data
       const newItem = req.body;
+      console.log('Received new menu item request:', newItem);
       
       if (!newItem.name || !newItem.description || !newItem.price || !newItem.category) {
+        console.log('Missing required fields:', { name: !!newItem.name, description: !!newItem.description, price: !!newItem.price, category: !!newItem.category });
         return res.status(400).json({ message: 'Missing required fields' });
       }
       
-      // Create the menu item
-      const createdItem = await storage.createMenuItem(newItem);
+      // Create the menu item with a clean object structure
+      const menuItemData = {
+        name: newItem.name,
+        description: newItem.description,
+        price: newItem.price,
+        category: newItem.category,
+        customizable: newItem.customizable || false,
+        available: true
+      };
+      
+      console.log('Creating menu item with data:', menuItemData);
+      const createdItem = await storage.createMenuItem(menuItemData);
+      console.log('Created menu item:', createdItem);
       
       // Broadcast the menu update to all connected clients
       broadcastToAll({

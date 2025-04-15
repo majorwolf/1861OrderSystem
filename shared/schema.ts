@@ -91,8 +91,20 @@ export interface OrderItem {
   removedToppings?: ToppingItem[]; // Toppings removed from the pizza
 }
 
-// Order status update schema
+// Order status update schema (legacy - to be deprecated)
 export const orderStatusUpdateSchema = z.object({
+  id: z.number(),
+  status: z.enum(["new", "preparing", "ready", "completed"]),
+});
+
+// Kitchen status update schema
+export const kitchenStatusUpdateSchema = z.object({
+  id: z.number(),
+  status: z.enum(["new", "preparing", "ready", "completed"]),
+});
+
+// Bar status update schema
+export const barStatusUpdateSchema = z.object({
   id: z.number(),
   status: z.enum(["new", "preparing", "ready", "completed"]),
 });
@@ -114,3 +126,5 @@ export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 
 export type OrderStatusUpdate = z.infer<typeof orderStatusUpdateSchema>;
+export type KitchenStatusUpdate = z.infer<typeof kitchenStatusUpdateSchema>;
+export type BarStatusUpdate = z.infer<typeof barStatusUpdateSchema>;

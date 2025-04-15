@@ -46,7 +46,9 @@ export interface IStorage {
   getOrdersByStatus(status: string): Promise<Order[]>;
   getOrder(id: number): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
-  updateOrderStatus(update: OrderStatusUpdate): Promise<Order | undefined>;
+  updateOrderStatus(update: OrderStatusUpdate): Promise<Order | undefined>; // Legacy - to be deprecated
+  updateKitchenStatus(update: KitchenStatusUpdate): Promise<Order | undefined>;
+  updateBarStatus(update: BarStatusUpdate): Promise<Order | undefined>;
   purgeAllOrders(): Promise<boolean>;
 }
 
@@ -231,9 +233,42 @@ export class MemStorage implements IStorage {
       return undefined;
     }
     
-    const updatedOrder: Order = { ...order, status: update.status };
+    const updatedOrder: Order = { 
+      ...order, 
+      status: update.status,
+      kitchenStatus: update.status,
+      barStatus: update.status 
+    };
     this.orders.set(update.id, updatedOrder);
     return updatedOrder;
+  }
+
+  async updateKitchenStatus(update: KitchenStatusUpdate): Promise<Order | undefined> {
+    const order = this.orders.get(update.id);
+    if (!order) {
+      return undefined;
+    }
+    
+    const updatedOrder: Order = { ...order, kitchenStatus: update.status };
+    this.orders.set(update.id, updatedOrder);
+    return updatedOrder;
+  }
+
+  async updateBarStatus(update: BarStatusUpdate): Promise<Order | undefined> {
+    const order = this.orders.get(update.id);
+    if (!order) {
+      return undefined;
+    }
+    
+    const updatedOrder: Order = { ...order, barStatus: update.status };
+    this.orders.set(update.id, updatedOrder);
+    return updatedOrder;
+  }
+
+  async purgeAllOrders(): Promise<boolean> {
+    this.orders.clear();
+    this.orderId = 1;
+    return true;
   }
 }
 

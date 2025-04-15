@@ -7,6 +7,7 @@ export default function KitchenView() {
   const [kitchenOrders, setKitchenOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hideCompleted, setHideCompleted] = useState<boolean>(true);
   
   // Fetch kitchen orders directly from API
   useEffect(() => {
@@ -42,10 +43,48 @@ export default function KitchenView() {
       
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Kitchen Orders</h1>
-        <Link href="/">
-          <span className="text-blue-600 hover:underline cursor-pointer">← Back to Home</span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center">
+            <label htmlFor="hideCompleted" className="mr-2 text-sm font-medium">
+              Hide Delivered
+            </label>
+            <div className="relative inline-block w-10 mr-2 align-middle select-none">
+              <input 
+                type="checkbox" 
+                id="hideCompleted" 
+                name="hideCompleted"
+                checked={hideCompleted}
+                onChange={() => setHideCompleted(!hideCompleted)}
+                className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+              />
+              <label 
+                htmlFor="hideCompleted" 
+                className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${hideCompleted ? 'bg-green-400' : 'bg-gray-300'}`}
+              ></label>
+            </div>
+          </div>
+          <Link href="/">
+            <span className="text-blue-600 hover:underline cursor-pointer">← Back to Home</span>
+          </Link>
+        </div>
       </div>
+      
+      {/* Add CSS for toggle switch */}
+      <style jsx>{`
+        .toggle-checkbox:checked {
+          right: 0;
+          border-color: #68D391;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+          background-color: #68D391;
+        }
+        .toggle-checkbox {
+          right: 0;
+          transition: all 0.3s;
+          left: 0;
+          border-color: #CBD5E0;
+        }
+      `}</style>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
@@ -56,12 +95,18 @@ export default function KitchenView() {
           <div className="col-span-full bg-white p-6 rounded-lg shadow">
             <p className="text-center text-red-500">{error}</p>
           </div>
-        ) : kitchenOrders.length === 0 ? (
+        ) : kitchenOrders.filter(order => !hideCompleted || order.status !== 'completed').length === 0 ? (
           <div className="col-span-full bg-white p-6 rounded-lg shadow">
-            <p className="text-center text-gray-500">No kitchen orders at the moment.</p>
+            <p className="text-center text-gray-500">
+              {hideCompleted 
+                ? "No active kitchen orders at the moment."
+                : "No kitchen orders at the moment."}
+            </p>
           </div>
         ) : (
-          kitchenOrders.map(order => (
+          kitchenOrders
+            .filter(order => !hideCompleted || order.status !== 'completed')
+            .map(order => (
             <div key={order.id} className="bg-white p-4 rounded-lg shadow">
               <div className="flex justify-between items-center mb-3">
                 <h2 className="text-lg font-semibold">Order #{order.id}</h2>
@@ -75,12 +120,43 @@ export default function KitchenView() {
               
               <h3 className="font-medium mb-2 border-t pt-2">Items:</h3>
               <ul className="space-y-2">
-                {order.items.map((item, index) => (
-                  <li key={index} className="flex justify-between">
-                    <span>{item.quantity}x {item.name}</span>
-                    <span>{item.size && `(${item.size})`}</span>
-                  </li>
-                ))}
+                {order.items
+                  .filter(item => item.name.toLowerCase().indexOf('coke') === -1 && 
+                                 item.name.toLowerCase().indexOf('sprite') === -1 && 
+                                 item.name.toLowerCase().indexOf('water') === -1 && 
+                                 item.name.toLowerCase().indexOf('beer') === -1 &&
+                                 item.category !== 'drink')
+                  .map((item, index) => (
+                    <li key={index} className="mb-3 pb-2 border-b border-gray-100 last:border-0">
+                      <div className="flex justify-between">
+                        <span className="font-medium">{item.quantity}x {item.name}</span>
+                        <span>{item.size && `(${item.size})`}</span>
+                      </div>
+                      
+                      {/* Show toppings */}
+                      {item.addedToppings && item.addedToppings.length > 0 && (
+                        <div className="text-sm text-gray-600 mt-1">
+                          <span className="font-medium">Added:</span>{' '}
+                          {item.addedToppings.map(t => t.name).join(', ')}
+                        </div>
+                      )}
+                      
+                      {item.removedToppings && item.removedToppings.length > 0 && (
+                        <div className="text-sm text-gray-600 mt-1">
+                          <span className="font-medium">Removed:</span>{' '}
+                          {item.removedToppings.map(t => t.name).join(', ')}
+                        </div>
+                      )}
+                      
+                      {/* Show item-specific special instructions */}
+                      {item.notes && (
+                        <div className="text-sm italic mt-1">
+                          Note: {item.notes}
+                        </div>
+                      )}
+                    </li>
+                  ))
+                }
               </ul>
               
               {order.notes && (
@@ -110,7 +186,7 @@ export default function KitchenView() {
                   onClick={() => updateOrderStatus(order.id, 'completed')}
                   disabled={order.status !== 'ready'}
                 >
-                  Complete
+                  Delivered
                 </button>
               </div>
             </div>

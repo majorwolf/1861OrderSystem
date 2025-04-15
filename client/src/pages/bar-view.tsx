@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Order } from "@shared/schema";
+import { updateOrderStatus as wsUpdateOrderStatus } from "@/lib/websocket";
 
 export default function BarView() {
   const [barOrders, setBarOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hideCompleted, setHideCompleted] = useState<boolean>(true);
   
   // Fetch bar orders directly from API
   useEffect(() => {

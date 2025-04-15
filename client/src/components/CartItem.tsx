@@ -32,7 +32,7 @@ export default function CartItem({ item, index }: CartItemProps) {
       <div className="flex-grow">
         <div className="flex justify-between">
           <span className="font-medium">{item.quantity}× {item.name}</span>
-          <span className="font-medium">${calculatePrice(item)}</span>
+          <span className="font-medium">${(parseFloat(item.price.replace('$', '').replace('+', '')) * item.quantity).toFixed(2)}</span>
         </div>
         {item.size && (
           <span className="text-sm text-gray-500">{item.size}</span>

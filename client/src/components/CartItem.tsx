@@ -75,15 +75,22 @@ export default function CartItem({ item, index }: CartItemProps) {
 
 // Helper function to calculate total price based on quantity and size
 function calculatePrice(item: OrderItem): string {
+  // Parse the base price removing the $ and any + sign
   let basePrice = parseFloat(item.price.replace('$', '').replace('+', ''));
   
   // Add price based on size
   if (item.size === "Large") {
-    basePrice += 3;
-  } else if (item.size === "Family") {
-    basePrice += 5;
+    basePrice += 2; // Match the same $2 pricing from customization
   }
   
+  // Add cost of additional toppings if present
+  if (item.addedToppings && item.addedToppings.length > 0) {
+    item.addedToppings.forEach(topping => {
+      basePrice += parseFloat(topping.price.replace('$', ''));
+    });
+  }
+  
+  // Calculate total with quantity
   const totalPrice = (basePrice * item.quantity).toFixed(2);
   return totalPrice;
 }

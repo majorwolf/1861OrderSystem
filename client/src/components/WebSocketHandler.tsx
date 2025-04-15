@@ -29,7 +29,7 @@ export function WebSocketHandler() {
           case 'newOrder':
             // Add new order
             console.log("Received new order:", data.payload);
-            setOrders(prevOrders => {
+            setOrders((prevOrders: Order[]) => {
               const newOrder = data.payload as Order;
               return [...prevOrders, newOrder];
             });
@@ -39,6 +39,12 @@ export function WebSocketHandler() {
             // Update existing order
             console.log("Received order update:", data.payload);
             updateOrder(data.payload);
+            break;
+            
+          case 'ordersPurged':
+            // All orders have been purged
+            console.log("Received orders purged event:", data.payload);
+            setOrders([]);
             break;
             
           default:

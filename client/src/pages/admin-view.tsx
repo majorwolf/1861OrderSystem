@@ -317,6 +317,34 @@ export default function AdminView() {
     });
   };
   
+  // Function to purge all orders (for testing purposes)
+  const purgeAllOrders = async () => {
+    if (!confirm('Are you sure you want to purge ALL orders? This action cannot be undone and will remove all orders from the system.')) {
+      return;
+    }
+    
+    try {
+      setPurgingOrders(true);
+      
+      const response = await fetch('/api/orders/purge-all', {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to purge orders');
+      }
+      
+      setSuccessMessage('All orders have been purged successfully!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error('Error purging orders:', err);
+      setError('Failed to purge orders. Please try again.');
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setPurgingOrders(false);
+    }
+  };
+  
   // Function to cancel editing
   const cancelEditing = () => {
     setEditingItem(null);
@@ -691,6 +719,29 @@ export default function AdminView() {
           </div>
         </div>
       )}
+      
+      {/* Purge Orders Section (for testing) */}
+      <div className="bg-white p-6 rounded-lg shadow mt-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Testing & Management</h2>
+        </div>
+        
+        <div className="mt-4">
+          <div className="mb-4 border-b pb-4">
+            <h3 className="text-lg font-medium mb-2">Purge All Orders</h3>
+            <p className="text-gray-600 mb-4">
+              This will permanently delete all orders from the database. Use this for testing purposes only.
+            </p>
+            <button
+              onClick={purgeAllOrders}
+              disabled={purgingOrders}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400"
+            >
+              {purgingOrders ? 'Purging Orders...' : 'Purge All Orders'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

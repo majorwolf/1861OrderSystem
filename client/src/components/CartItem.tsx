@@ -47,7 +47,7 @@ export default function CartItem({ item, index }: CartItemProps) {
         {item.addedToppings && item.addedToppings.length > 0 && (
           <div className="text-sm text-gray-600 mt-1">
             <span className="font-medium">Added:</span>{' '}
-            {item.addedToppings.map(topping => topping.name).join(', ')}
+            {item.addedToppings.map((topping: any) => topping.name).join(', ')}
           </div>
         )}
         
@@ -55,7 +55,7 @@ export default function CartItem({ item, index }: CartItemProps) {
         {item.removedToppings && item.removedToppings.length > 0 && (
           <div className="text-sm text-gray-600 mt-1">
             <span className="font-medium">Removed:</span>{' '}
-            {item.removedToppings.map(topping => topping.name).join(', ')}
+            {item.removedToppings.map((topping: any) => topping.name).join(', ')}
           </div>
         )}
         
@@ -90,7 +90,7 @@ function calculateUnitPrice(item: OrderItem): string {
   
   // Add cost of additional toppings if present
   if (item.addedToppings && item.addedToppings.length > 0) {
-    item.addedToppings.forEach(topping => {
+    item.addedToppings.forEach((topping: any) => {
       basePrice += parseFloat(topping.price.replace('$', ''));
     });
   }

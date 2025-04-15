@@ -16,7 +16,8 @@ export default function OrderCard({ order, type }: OrderCardProps) {
   };
   
   // Format timestamp
-  const formatTime = (date: Date) => {
+  const formatTime = (date: Date | null) => {
+    if (!date) return "";
     return format(new Date(date), "h:mm a");
   };
   
@@ -49,11 +50,41 @@ export default function OrderCard({ order, type }: OrderCardProps) {
           </span>
         </div>
         
-        <ul className="space-y-2 mb-4">
+        <ul className="space-y-3 mb-4">
           {order.items.map((item: OrderItem, index) => (
-            <li key={index} className="flex justify-between">
-              <span className="text-gray-800">{item.quantity}× {item.name}</span>
-              <span className="text-gray-600 text-sm">{item.size || ""}</span>
+            <li key={index} className="border-b border-gray-100 pb-2 last:border-0 last:pb-0">
+              <div className="flex justify-between">
+                <span className="text-gray-800 font-medium">{item.quantity}× {item.name}</span>
+                <span className="text-gray-600 text-sm">{item.size || ""}</span>
+              </div>
+              
+              {/* Show pizza customizations (only relevant for kitchen/bar) */}
+              {item.category === "pizza" && (
+                <div className="mt-1 text-xs">
+                  {/* Added toppings */}
+                  {item.addedToppings && item.addedToppings.length > 0 && (
+                    <div className="text-green-600">
+                      <span className="font-medium">Added:</span>{' '}
+                      {item.addedToppings.map((t: any) => t.name).join(', ')}
+                    </div>
+                  )}
+                  
+                  {/* Removed toppings */}
+                  {item.removedToppings && item.removedToppings.length > 0 && (
+                    <div className="text-red-600">
+                      <span className="font-medium">Removed:</span>{' '}
+                      {item.removedToppings.map((t: any) => t.name).join(', ')}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Item notes if any */}
+              {item.notes && (
+                <div className="text-gray-500 text-xs mt-1 italic">
+                  Note: {item.notes}
+                </div>
+              )}
             </li>
           ))}
         </ul>

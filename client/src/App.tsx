@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Switch, Route, Link } from "wouter";
+import { OrderProvider } from "@/context/OrderContext";
 
 // Import page components
 import CustomerView from "./pages/customer-view";
@@ -77,27 +78,27 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* The OrderContext provider needs to be here, outside of the routing */}
-      {/* so that all components can access the shared order state */}
-      <div className="app-container min-h-screen bg-gray-50">
-        {loaded ? (
-          <Switch>
-            <Route path="/" component={Home} />
-            <Route path="/table/:tableId" component={CustomerView} />
-            <Route path="/kitchen" component={KitchenView} /> 
-            <Route path="/bar" component={BarView} />
-            <Route path="/admin/qrcodes" component={QRCodeView} />
-            <Route path="/admin/menu" component={AdminView} />
-            <Route component={NotFound} />
-          </Switch>
-        ) : (
-          <div className="loading-container">
-            <p>Loading application...</p>
-          </div>
-        )}
-      </div>
-      
-      <Toaster />
+      <OrderProvider>
+        <div className="app-container min-h-screen bg-gray-50">
+          {loaded ? (
+            <Switch>
+              <Route path="/" component={Home} />
+              <Route path="/table/:tableId" component={CustomerView} />
+              <Route path="/kitchen" component={KitchenView} /> 
+              <Route path="/bar" component={BarView} />
+              <Route path="/admin/qrcodes" component={QRCodeView} />
+              <Route path="/admin/menu" component={AdminView} />
+              <Route component={NotFound} />
+            </Switch>
+          ) : (
+            <div className="loading-container">
+              <p>Loading application...</p>
+            </div>
+          )}
+        </div>
+        
+        <Toaster />
+      </OrderProvider>
     </QueryClientProvider>
   );
 }

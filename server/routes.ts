@@ -426,6 +426,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to update order status' });
     }
   });
+  
+  // Purge all orders (for testing/admin purposes)
+  app.delete('/api/orders/purge-all', async (req, res) => {
+    try {
+      const success = await storage.purgeAllOrders();
+      
+      if (success) {
+        // Broadcast to all clients that orders have been purged
+        broadcastToAll({
+          type: 'ordersPurged',
+          payload: { message: 'All orders have been purged' }
+        });
+        
+        res.status(200).json({ message: 'All orders have been purged successfully' });
+      } else {
+        res.status(500).json({ message: 'Failed to purge orders' });
+      }
+    } catch (error) {
+      console.error('Error purging orders:', error);
+      res.status(500).json({ message: 'Failed to purge orders' });
+    }
+  });
 
   // ===== TOPPINGS ROUTES =====
 

@@ -227,4 +227,14 @@ export class DatabaseStorage implements IStorage {
     
     return updatedOrders.length > 0 ? updatedOrders[0] : undefined;
   }
+  
+  async purgeAllOrders(): Promise<boolean> {
+    try {
+      await db.delete(orders);
+      return true;
+    } catch (error) {
+      console.error('Error purging all orders:', error);
+      return false;
+    }
+  }
 }

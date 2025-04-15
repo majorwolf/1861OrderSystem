@@ -28,6 +28,9 @@ export default function AdminView() {
   const [savingChanges, setSavingChanges] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
+  // State for purging orders
+  const [purgingOrders, setPurgingOrders] = useState(false);
+  
   // State for add/delete functionality
   const [showAddItemForm, setShowAddItemForm] = useState(false);
   const [newItem, setNewItem] = useState<NewMenuItem>({

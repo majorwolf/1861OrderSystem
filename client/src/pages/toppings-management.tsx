@@ -123,10 +123,16 @@ export default function ToppingsManagement() {
       return;
     }
     
-    // Format price to ensure it's valid
-    let formattedPrice = newTopping.price;
-    if (!formattedPrice.startsWith('$')) {
-      formattedPrice = '$' + formattedPrice;
+    // Format price to ensure it's valid and in $XX.XX format
+    let priceNumber = parseFloat(newTopping.price.replace('$', ''));
+    let formattedPrice = `$${priceNumber.toFixed(2)}`;
+    if (isNaN(priceNumber)) {
+      toast({
+        title: "Validation Error",
+        description: "Price must be a valid number",
+        variant: "destructive"
+      });
+      return;
     }
     
     try {
@@ -190,10 +196,16 @@ export default function ToppingsManagement() {
       return;
     }
     
-    // Format price
-    let formattedPrice = editingTopping.price;
-    if (!formattedPrice.startsWith('$')) {
-      formattedPrice = '$' + formattedPrice;
+    // Format price to ensure it's valid and in $XX.XX format
+    let priceNumber = parseFloat(editingTopping.price.replace('$', ''));
+    let formattedPrice = `$${priceNumber.toFixed(2)}`;
+    if (isNaN(priceNumber)) {
+      toast({
+        title: "Validation Error",
+        description: "Price must be a valid number",
+        variant: "destructive"
+      });
+      return;
     }
     
     try {

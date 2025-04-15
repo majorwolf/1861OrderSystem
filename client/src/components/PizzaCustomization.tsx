@@ -52,8 +52,11 @@ export default function PizzaCustomization({ menuItem, onClose, onAddToCart }: P
     // Remove pricing of removed toppings (we don't decrease the price, but it's useful to track)
     // This would be needed if we ever wanted to allow discounts for removing toppings
     
+    // Calculate total for one pizza
+    let singleItemTotal = total;
+    
     // Multiply by quantity
-    total *= quantity;
+    total = singleItemTotal * quantity;
     
     return total;
   };

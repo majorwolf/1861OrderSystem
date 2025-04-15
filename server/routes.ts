@@ -525,17 +525,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update topping availability
   app.patch('/api/toppings/:id/availability', async (req, res) => {
     try {
+      console.log('Toggle availability request received for ID:', req.params.id);
+      console.log('Request body:', req.body);
+      
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: 'Invalid topping ID' });
       }
       
       const { available } = req.body;
+      console.log('Availability value type:', typeof available, 'Value:', available);
+      
       if (typeof available !== 'boolean') {
         return res.status(400).json({ message: 'Invalid availability value' });
       }
       
+      console.log('Calling storage.updateToppingAvailability with id:', id, 'available:', available);
       const updatedTopping = await storage.updateToppingAvailability(id, available);
+      console.log('Update result:', updatedTopping);
+      
       if (!updatedTopping) {
         return res.status(404).json({ message: 'Topping not found' });
       }
@@ -549,7 +557,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedTopping);
     } catch (error) {
       console.error('Error updating topping availability:', error);
-      res.status(500).json({ message: 'Failed to update topping availability' });
+      res.status(500).json({ 
+        message: 'Failed to update topping availability',
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

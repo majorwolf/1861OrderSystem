@@ -253,6 +253,9 @@ export default function ToppingsManagement() {
   
   const handleToggleAvailability = async (topping: Topping) => {
     try {
+      // Log the request details for debugging
+      console.log('Toggling availability for topping:', topping.id, 'Current value:', topping.available);
+      
       const response = await fetch(`/api/toppings/${topping.id}/availability`, {
         method: 'PATCH',
         headers: {
@@ -263,11 +266,17 @@ export default function ToppingsManagement() {
         })
       });
       
+      // Log the response for debugging
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Error data:', errorData);
         throw new Error(`Failed to update availability: ${response.statusText}`);
       }
       
       const updatedTopping = await response.json();
+      console.log('Updated topping:', updatedTopping);
       
       // Update local state
       setToppings(prevToppings => 

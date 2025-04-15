@@ -11,6 +11,7 @@ import KitchenView from "./pages/kitchen-view";
 import BarView from "./pages/bar-view";
 import QRCodeView from "./pages/qrcode-view";
 import AdminView from "./pages/admin-view";
+import ToppingsManagement from "./pages/toppings-management";
 import NotFound from "./pages/not-found";
 
 // Simple Home Component
@@ -59,6 +60,12 @@ function Home() {
                 Menu Availability
               </span>
             </Link>
+            
+            <Link href="/admin/toppings">
+              <span className="inline-block bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 cursor-pointer">
+                Toppings Management
+              </span>
+            </Link>
           </div>
         </div>
       </div>
@@ -88,6 +95,7 @@ function App() {
               <Route path="/bar" component={BarView} />
               <Route path="/admin/qrcodes" component={QRCodeView} />
               <Route path="/admin/menu" component={AdminView} />
+              <Route path="/admin/toppings" component={ToppingsManagement} />
               <Route component={NotFound} />
             </Switch>
           ) : (

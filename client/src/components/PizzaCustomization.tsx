@@ -45,8 +45,12 @@ export default function PizzaCustomization({ menuItem, onClose, onAddToCart }: P
     
     // Add additional toppings pricing
     addedToppings.forEach(topping => {
-      total += parseFloat(topping.price.replace('$', ''));
+      const toppingPrice = parseFloat(topping.price.replace('$', '').replace('+', ''));
+      total += toppingPrice;
     });
+    
+    // Remove pricing of removed toppings (we don't decrease the price, but it's useful to track)
+    // This would be needed if we ever wanted to allow discounts for removing toppings
     
     // Multiply by quantity
     total *= quantity;

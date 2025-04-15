@@ -57,8 +57,10 @@ export const insertTableSchema = createInsertSchema(tables).omit({
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   tableId: integer("table_id").notNull(),
-  status: text("status").notNull().default("new"), // "new", "preparing", "ready", "completed"
-  type: text("type").notNull(), // "kitchen" or "bar"
+  status: text("status").notNull().default("new"), // "new", "preparing", "ready", "completed" - to be deprecated
+  kitchenStatus: text("kitchen_status").notNull().default("new"), // "new", "preparing", "ready", "completed"
+  barStatus: text("bar_status").notNull().default("new"), // "new", "preparing", "ready", "completed"
+  type: text("type").notNull(), // "kitchen", "bar", or "both"
   items: json("items").notNull().$type<OrderItem[]>(), // Array of order items
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),

@@ -152,8 +152,27 @@ export default function PizzaCustomization({ menuItem, onClose, onAddToCart }: P
 
   // Handle adding the customized pizza to cart
   const handleAddCustomPizzaToCart = () => {
-    // Calculate price
-    const totalPrice = calculateTotalPrice();
+    // Calculate price for one pizza
+    let singlePizzaPrice = basePrice;
+    
+    // Add size pricing
+    if (size === "Large") {
+      singlePizzaPrice += 2; // $2 extra for large
+    }
+    
+    // Add additional toppings pricing
+    addedToppings.forEach(topping => {
+      const toppingPrice = parseFloat(topping.price.replace('$', '').replace('+', ''));
+      singlePizzaPrice += toppingPrice;
+    });
+    
+    // Format price per unit (this is what shows in the cart line item)
+    const formattedSinglePrice = formatPrice(singlePizzaPrice);
+    
+    // Calculate total price (quantity * single price)
+    const totalPrice = singlePizzaPrice * quantity;
+    
+    console.log('Adding to cart - single price:', singlePizzaPrice, 'quantity:', quantity, 'total:', totalPrice);
     
     // Prepare the toppings lists
     const finalAddedToppings = addedToppings.length > 0 ? addedToppings : undefined;
@@ -163,7 +182,7 @@ export default function PizzaCustomization({ menuItem, onClose, onAddToCart }: P
     addToCart({
       menuItemId: menuItem.id,
       name: menuItem.name,
-      price: formatPrice(totalPrice),
+      price: formattedSinglePrice, // Use the single item price for display in cart
       quantity,
       size,
       notes: notes.trim() || undefined,

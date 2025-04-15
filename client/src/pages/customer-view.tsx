@@ -17,6 +17,11 @@ export default function CustomerView() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [customerLastName, setCustomerLastName] = useState<string>("");
+  
+  // State for order submission
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   
   // Get cart from order context
   const { cart, setTableId, clearCart } = useOrderContext();
@@ -104,12 +109,29 @@ export default function CustomerView() {
           ) : menuItems.length === 0 ? (
             <p className="text-center text-gray-500">No menu items available.</p>
           ) : (
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Our Menu</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {menuItems.map(item => (
-                  <MenuItemCard key={item.id} item={item} />
-                ))}
+            <div className="space-y-8">
+              {/* Pizza Section */}
+              <div>
+                <h3 className="font-semibold text-xl border-b pb-2 mb-4">Pizza</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {menuItems
+                    .filter(item => item.category === 'pizza')
+                    .map(item => (
+                      <MenuItemCard key={item.id} item={item} />
+                    ))}
+                </div>
+              </div>
+              
+              {/* Drinks Section */}
+              <div>
+                <h3 className="font-semibold text-xl border-b pb-2 mb-4">Drinks</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {menuItems
+                    .filter(item => item.category === 'drink')
+                    .map(item => (
+                      <MenuItemCard key={item.id} item={item} />
+                    ))}
+                </div>
               </div>
             </div>
           )}
@@ -137,18 +159,42 @@ export default function CustomerView() {
           )}
         </div>
         
+        {/* Last Name Input */}
+        {cart.length > 0 && (
+          <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+            <h3 className="font-semibold text-lg mb-2">Your Information</h3>
+            <div className="mb-4">
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                Last Name (for order identification)
+              </label>
+              <input
+                type="text"
+                id="lastName"
+                value={customerLastName}
+                onChange={(e) => setCustomerLastName(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter your last name"
+              />
+            </div>
+          </div>
+        )}
+        
         {/* Place order button */}
         <div className="mt-6">
           <Button 
             className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold text-lg"
-            disabled={cart.length === 0}
+            disabled={cart.length === 0 || (cart.length > 0 && !customerLastName.trim())}
             onClick={() => {
-              alert('Order placed successfully!');
+              alert(`Order placed successfully for ${customerLastName}!`);
               clearCart();
+              setCustomerLastName("");
             }}
           >
             Place Order
           </Button>
+          {cart.length > 0 && !customerLastName.trim() && (
+            <p className="text-red-500 text-sm mt-2">Please enter your last name to place the order</p>
+          )}
         </div>
       </div>
       

@@ -76,6 +76,18 @@ export default function PizzaCustomization({ menuItem, onClose, onAddToCart }: P
         }
         const data = await response.json();
         setPresetToppings(data);
+        
+        // For non-customizable (prebuilt) pizzas, set all preset toppings as already applied
+        // This allows customers to remove toppings from prebuilt pizzas
+        if (data.length > 0) {
+          console.log(`Found ${data.length} preset toppings for ${menuItem.name}`);
+          
+          // Show preset toppings message
+          if (data.length > 0) {
+            const toppingNames = data.map((t: ToppingItem) => t.name).join(", ");
+            console.log(`Pizza comes with: ${toppingNames}`);
+          }
+        }
       } catch (error) {
         console.error('Error fetching preset toppings:', error);
         setError('Failed to load preset toppings');
@@ -232,6 +244,17 @@ export default function PizzaCustomization({ menuItem, onClose, onAddToCart }: P
           </svg>
         </button>
       </div>
+      
+      {/* Display preset toppings for this pizza if any */}
+      {presetToppings.length > 0 && (
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <p className="text-sm text-gray-600">
+            <span className="font-medium">Includes:</span>{' '}
+            {presetToppings.map((t: ToppingItem) => t.name).join(", ")}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">You can customize by adding or removing toppings below.</p>
+        </div>
+      )}
       
       <div className="border-b pb-4 mb-4">
         <div className="font-semibold mb-2">Size</div>

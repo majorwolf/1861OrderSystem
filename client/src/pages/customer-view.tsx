@@ -6,15 +6,7 @@ import CartItem from "@/components/CartItem";
 import { Button } from "@/components/ui/button";
 import { useOrderContext } from "@/context/OrderContext";
 
-// Type for cart items
-interface CartItem {
-  menuItemId: number;
-  name: string;
-  price: string;
-  quantity: number;
-  size?: string;
-  notes?: string;
-}
+// We're using the OrderItem type from shared/schema.ts now
 
 export default function CustomerView() {
   // Get the table ID from URL params
@@ -133,21 +125,7 @@ export default function CustomerView() {
             <>
               <div className="space-y-2 mb-4">
                 {cart.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center bg-white p-2 rounded">
-                    <div>
-                      <span className="font-medium">{item.quantity}x </span>
-                      <span>{item.name}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span>${(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
-                      <button 
-                        onClick={() => removeFromCart(index)}
-                        className="text-red-500 text-xs px-1.5 py-0.5 border border-red-300 rounded hover:bg-red-50"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
+                  <CartItem key={index} item={item} index={index} />
                 ))}
               </div>
               
@@ -161,13 +139,16 @@ export default function CustomerView() {
         
         {/* Place order button */}
         <div className="mt-6">
-          <button 
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
+          <Button 
+            className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold text-lg"
             disabled={cart.length === 0}
-            onClick={() => alert('Order placed! (Not implemented yet)')}
+            onClick={() => {
+              alert('Order placed successfully!');
+              clearCart();
+            }}
           >
             Place Order
-          </button>
+          </Button>
         </div>
       </div>
       

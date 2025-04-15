@@ -59,9 +59,25 @@ export function sendWebSocketMessage(type: string, payload: any) {
   }
 }
 
-// Function to update order status via WebSocket
+// Function to update order status via WebSocket (legacy - to be deprecated)
 export function updateOrderStatus(orderId: number, status: string) {
   return sendWebSocketMessage('orderStatusUpdate', {
+    id: orderId,
+    status
+  });
+}
+
+// Function to update kitchen status via WebSocket
+export function updateKitchenStatus(orderId: number, status: string) {
+  return sendWebSocketMessage('kitchenStatusUpdate', {
+    id: orderId,
+    status
+  });
+}
+
+// Function to update bar status via WebSocket
+export function updateBarStatus(orderId: number, status: string) {
+  return sendWebSocketMessage('barStatusUpdate', {
     id: orderId,
     status
   });

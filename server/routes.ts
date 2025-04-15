@@ -2,7 +2,12 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { orderStatusUpdateSchema, insertOrderSchema } from "@shared/schema";
+import { 
+  orderStatusUpdateSchema, 
+  kitchenStatusUpdateSchema, 
+  barStatusUpdateSchema, 
+  insertOrderSchema 
+} from "@shared/schema";
 import { log } from "./vite";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -28,7 +33,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const data = JSON.parse(message.toString());
         
         if (data.type === 'orderStatusUpdate') {
-          // Validate order status update
+          // Validate order status update (legacy)
           const validation = orderStatusUpdateSchema.safeParse(data.payload);
           
           if (!validation.success) {
@@ -41,6 +46,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Update order status
           const updatedOrder = await storage.updateOrderStatus(validation.data);
+          
+          if (!updatedOrder) {
+            ws.send(JSON.stringify({ 
+              type: 'error', 
+              message: 'Order not found'
+            }));
+            return;
+          }
+          
+          // Broadcast order update to all clients
+          broadcastToAll({
+            type: 'orderUpdated',
+            payload: updatedOrder
+          });
+        } else if (data.type === 'kitchenStatusUpdate') {
+          // Validate kitchen status update
+          const validation = kitchenStatusUpdateSchema.safeParse(data.payload);
+          
+          if (!validation.success) {
+            ws.send(JSON.stringify({ 
+              type: 'error', 
+              message: 'Invalid kitchen status update'
+            }));
+            return;
+          }
+          
+          // Update kitchen status
+          const updatedOrder = await storage.updateKitchenStatus(validation.data);
+          
+          if (!updatedOrder) {
+            ws.send(JSON.stringify({ 
+              type: 'error', 
+              message: 'Order not found'
+            }));
+            return;
+          }
+          
+          // Broadcast order update to all clients
+          broadcastToAll({
+            type: 'orderUpdated',
+            payload: updatedOrder
+          });
+        } else if (data.type === 'barStatusUpdate') {
+          // Validate bar status update
+          const validation = barStatusUpdateSchema.safeParse(data.payload);
+          
+          if (!validation.success) {
+            ws.send(JSON.stringify({ 
+              type: 'error', 
+              message: 'Invalid bar status update'
+            }));
+            return;
+          }
+          
+          // Update bar status
+          const updatedOrder = await storage.updateBarStatus(validation.data);
           
           if (!updatedOrder) {
             ws.send(JSON.stringify({ 
@@ -390,7 +451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Update order status
+  // Update order status (legacy - keeping for backward compatibility)
   app.patch('/api/orders/:id/status', async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -424,6 +485,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedOrder);
     } catch (error) {
       res.status(500).json({ message: 'Failed to update order status' });
+    }
+  });
+
+  // Update kitchen status
+  app.patch('/api/orders/:id/kitchen-status', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid order ID' });
+      }
+      
+      // Validate the status update
+      const validation = kitchenStatusUpdateSchema.safeParse({
+        id,
+        status: req.body.status
+      });
+      
+      if (!validation.success) {
+        return res.status(400).json({ message: 'Invalid kitchen status update', errors: validation.error.errors });
+      }
+      
+      // Update the kitchen status
+      const updatedOrder = await storage.updateKitchenStatus(validation.data);
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+      
+      // Broadcast the order update to all connected clients
+      broadcastToAll({
+        type: 'orderUpdated',
+        payload: updatedOrder
+      });
+      
+      res.json(updatedOrder);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update kitchen status' });
+    }
+  });
+
+  // Update bar status
+  app.patch('/api/orders/:id/bar-status', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid order ID' });
+      }
+      
+      // Validate the status update
+      const validation = barStatusUpdateSchema.safeParse({
+        id,
+        status: req.body.status
+      });
+      
+      if (!validation.success) {
+        return res.status(400).json({ message: 'Invalid bar status update', errors: validation.error.errors });
+      }
+      
+      // Update the bar status
+      const updatedOrder = await storage.updateBarStatus(validation.data);
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+      
+      // Broadcast the order update to all connected clients
+      broadcastToAll({
+        type: 'orderUpdated',
+        payload: updatedOrder
+      });
+      
+      res.json(updatedOrder);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update bar status' });
     }
   });
   

@@ -14,6 +14,7 @@ export interface IStorage {
   getMenuItem(id: number): Promise<MenuItem | undefined>;
   createMenuItem(item: InsertMenuItem): Promise<MenuItem>;
   updateMenuItemAvailability(id: number, available: boolean): Promise<MenuItem | undefined>;
+  updateMenuItem(id: number, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined>;
   deleteMenuItem(id: number): Promise<boolean>;
 
   // Tables
@@ -125,6 +126,17 @@ export class MemStorage implements IStorage {
     }
     
     const updatedMenuItem = { ...menuItem, available };
+    this.menuItems.set(id, updatedMenuItem);
+    return updatedMenuItem;
+  }
+  
+  async updateMenuItem(id: number, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined> {
+    const menuItem = this.menuItems.get(id);
+    if (!menuItem) {
+      return undefined;
+    }
+    
+    const updatedMenuItem = { ...menuItem, ...item };
     this.menuItems.set(id, updatedMenuItem);
     return updatedMenuItem;
   }

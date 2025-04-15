@@ -559,13 +559,21 @@ export default function AdminView() {
                       </label>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => deleteMenuItem(item.id)}
-                        disabled={deletingItem === item.id}
-                        className="text-xs px-2 py-1 text-white bg-red-600 rounded hover:bg-red-700 disabled:bg-gray-400"
-                      >
-                        {deletingItem === item.id ? 'Deleting...' : 'Delete'}
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => startEditingItem(item)}
+                          className="text-xs px-2 py-1 text-white bg-blue-600 rounded hover:bg-blue-700"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteMenuItem(item.id)}
+                          disabled={deletingItem === item.id}
+                          className="text-xs px-2 py-1 text-white bg-red-600 rounded hover:bg-red-700 disabled:bg-gray-400"
+                        >
+                          {deletingItem === item.id ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -574,6 +582,112 @@ export default function AdminView() {
           </div>
         )}
       </div>
+      
+      {/* Edit Menu Item Dialog */}
+      {editingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl">
+            <h2 className="text-xl font-semibold mb-4">Edit Menu Item</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={editingItem.name}
+                  onChange={handleEditInputChange}
+                  className="w-full p-2 border rounded"
+                  placeholder="Item name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+                <input
+                  type="text"
+                  name="price"
+                  value={editingItem.price}
+                  onChange={handleEditInputChange}
+                  className="w-full p-2 border rounded"
+                  placeholder="$0.00"
+                  required
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                <textarea
+                  name="description"
+                  value={editingItem.description}
+                  onChange={handleEditInputChange}
+                  className="w-full p-2 border rounded"
+                  rows={3}
+                  placeholder="Item description"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select
+                  name="category"
+                  value={editingItem.category}
+                  onChange={handleEditInputChange}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="pizza">Pizza</option>
+                  <option value="drink">Drink</option>
+                  <option value="side">Side</option>
+                  <option value="dessert">Dessert</option>
+                </select>
+              </div>
+              <div className="flex items-center">
+                <div className="mr-4">
+                  <input
+                    type="checkbox"
+                    id="edit-customizable"
+                    name="customizable"
+                    checked={editingItem.customizable}
+                    onChange={handleEditInputChange}
+                    className="mr-2"
+                  />
+                  <label htmlFor="edit-customizable" className="text-sm font-medium text-gray-700">
+                    Customizable
+                  </label>
+                </div>
+                <div>
+                  <input
+                    type="checkbox"
+                    id="edit-available"
+                    name="available"
+                    checked={editingItem.available}
+                    onChange={handleEditInputChange}
+                    className="mr-2"
+                  />
+                  <label htmlFor="edit-available" className="text-sm font-medium text-gray-700">
+                    Available
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={cancelEditing}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={updateMenuItem}
+                disabled={updatingItem}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+              >
+                {updatingItem ? 'Updating...' : 'Update Item'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

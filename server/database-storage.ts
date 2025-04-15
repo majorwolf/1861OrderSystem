@@ -40,6 +40,15 @@ export class DatabaseStorage implements IStorage {
     return items.length > 0 ? items[0] : undefined;
   }
   
+  async updateMenuItem(id: number, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined> {
+    const items = await db.update(menuItems)
+      .set(item)
+      .where(eq(menuItems.id, id))
+      .returning();
+      
+    return items.length > 0 ? items[0] : undefined;
+  }
+  
   async deleteMenuItem(id: number): Promise<boolean> {
     const deleted = await db.delete(menuItems)
       .where(eq(menuItems.id, id))

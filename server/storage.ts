@@ -3,7 +3,9 @@ import {
   Table, InsertTable, 
   Order, InsertOrder,
   OrderStatusUpdate,
-  menuItems
+  Topping, InsertTopping,
+  MenuItemTopping, InsertMenuItemTopping,
+  menuItems, toppings, menuItemToppings
 } from "@shared/schema";
 
 // Storage interface
@@ -16,6 +18,20 @@ export interface IStorage {
   updateMenuItemAvailability(id: number, available: boolean): Promise<MenuItem | undefined>;
   updateMenuItem(id: number, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined>;
   deleteMenuItem(id: number): Promise<boolean>;
+
+  // Toppings
+  getToppings(): Promise<Topping[]>;
+  getToppingsByCategory(category: string): Promise<Topping[]>;
+  getTopping(id: number): Promise<Topping | undefined>;
+  createTopping(topping: InsertTopping): Promise<Topping>;
+  updateToppingAvailability(id: number, available: boolean): Promise<Topping | undefined>;
+  updateTopping(id: number, topping: Partial<InsertTopping>): Promise<Topping | undefined>;
+  deleteTopping(id: number): Promise<boolean>;
+
+  // Menu Item Toppings (Presets)
+  getMenuItemToppings(menuItemId: number): Promise<Topping[]>;
+  addToppingToMenuItem(menuItemId: number, toppingId: number): Promise<boolean>;
+  removeToppingFromMenuItem(menuItemId: number, toppingId: number): Promise<boolean>;
 
   // Tables
   getTables(): Promise<Table[]>;

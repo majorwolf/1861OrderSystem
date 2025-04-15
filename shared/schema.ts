@@ -1,6 +1,19 @@
-import { pgTable, text, serial, integer, timestamp, boolean, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, json, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Toppings table (ingredients for pizzas)
+export const toppings = pgTable("toppings", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  price: text("price").notNull(), // Store as text to handle "$1.50" format
+  category: text("category").notNull().default("regular"), // "regular", "cheese", "meat", "veggie"
+  available: boolean("available").default(true),
+});
+
+export const insertToppingSchema = createInsertSchema(toppings).omit({
+  id: true,
+});
 
 // Menu items table (pizzas, drinks, etc.)
 export const menuItems = pgTable("menu_items", {
@@ -16,6 +29,18 @@ export const menuItems = pgTable("menu_items", {
 export const insertMenuItemSchema = createInsertSchema(menuItems).omit({
   id: true,
 });
+
+// Menu Item Toppings - Junction table for preset toppings
+export const menuItemToppings = pgTable("menu_item_toppings", {
+  menuItemId: integer("menu_item_id").notNull().references(() => menuItems.id, { onDelete: 'cascade' }),
+  toppingId: integer("topping_id").notNull().references(() => toppings.id, { onDelete: 'cascade' }),
+}, (table) => {
+  return {
+    pk: primaryKey({ columns: [table.menuItemId, table.toppingId] }),
+  };
+});
+
+export const insertMenuItemToppingSchema = createInsertSchema(menuItemToppings);
 
 // Tables for the restaurant
 export const tables = pgTable("tables", {
@@ -44,6 +69,13 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
   createdAt: true,
 });
 
+// Define the topping item type
+export interface ToppingItem {
+  id: number;
+  name: string;
+  price: string;
+}
+
 // Define the order item type with TypeScript
 export interface OrderItem {
   menuItemId: number;
@@ -52,6 +84,8 @@ export interface OrderItem {
   price: string;
   notes?: string;
   size?: string; // "Regular", "Large", etc.
+  addedToppings?: ToppingItem[]; // Toppings added to the pizza
+  removedToppings?: ToppingItem[]; // Toppings removed from the pizza
 }
 
 // Order status update schema
@@ -63,6 +97,12 @@ export const orderStatusUpdateSchema = z.object({
 // Type definitions
 export type MenuItem = typeof menuItems.$inferSelect;
 export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
+
+export type Topping = typeof toppings.$inferSelect;
+export type InsertTopping = z.infer<typeof insertToppingSchema>;
+
+export type MenuItemTopping = typeof menuItemToppings.$inferSelect;
+export type InsertMenuItemTopping = z.infer<typeof insertMenuItemToppingSchema>;
 
 export type Table = typeof tables.$inferSelect;
 export type InsertTable = z.infer<typeof insertTableSchema>;

@@ -1,13 +1,17 @@
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
 import { 
   MenuItem, InsertMenuItem, 
   Table, InsertTable, 
   Order, InsertOrder,
   OrderStatusUpdate,
+  Topping, InsertTopping,
+  MenuItemTopping, InsertMenuItemTopping,
   menuItems,
   tables,
-  orders
+  orders,
+  toppings,
+  menuItemToppings
 } from "@shared/schema";
 import { IStorage } from "./storage";
 

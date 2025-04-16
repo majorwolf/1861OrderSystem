@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, Fragment } from "react";
 import { useOrderContext } from "@/context/OrderContext";
+import { useLocation } from "wouter";
 import CartItem from "./CartItem";
-import OrderSuccess from "./OrderSuccess";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { OrderItem } from "@shared/schema";
@@ -26,7 +26,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
   const { toast } = useToast();
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showOrderSuccess, setShowOrderSuccess] = useState(false);
+  const [_, setLocation] = useLocation();
   
   const calculateSubtotal = (): number => {
     return cart.reduce((sum, item) => {
@@ -121,11 +121,13 @@ export default function Cart({ isOpen, onClose }: CartProps) {
       
       await Promise.all(orders);
       
-      // Clear cart and show success screen
+      // Clear cart and redirect to confirmation page
       clearCart();
       setNotes("");
       onClose();
-      setShowOrderSuccess(true);
+      
+      // Redirect to the confirmation page
+      setLocation(`/order-confirmation/${tableId}`);
     } catch (error) {
       console.error(error);
       toast({
@@ -138,13 +140,8 @@ export default function Cart({ isOpen, onClose }: CartProps) {
     }
   };
   
-  const handleSuccessClose = () => {
-    setShowOrderSuccess(false);
-  };
-  
   return (
     <Fragment>
-      {showOrderSuccess && <OrderSuccess onClose={handleSuccessClose} />}
       
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent className="flex flex-col h-full w-full max-w-md sm:max-w-md">

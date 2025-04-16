@@ -10,6 +10,9 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Replace server/db.ts with Docker-compatible version
+RUN mv server/db-docker.ts server/db.ts
+
 # Add our build script
 COPY docker-build.sh ./
 RUN chmod +x docker-build.sh

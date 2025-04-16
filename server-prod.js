@@ -3,44 +3,11 @@
 import express from 'express';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
-import { eq } from 'drizzle-orm';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-// Import database and schema
-// In production, we need to be flexible about where these modules are located
-let db, menuItems, tables, orders;
-
-// Function to dynamically import modules
-async function importModules() {
-  try {
-    // Try different possible locations for the modules
-    try {
-      const dbModule = await import('./server/db.js');
-      db = dbModule.db;
-    } catch (e) {
-      console.log('Trying alternate db path...');
-      const dbModule = await import('./dist/server/db.js');
-      db = dbModule.db;
-    }
-    
-    try {
-      const schemaModule = await import('./shared/schema.js');
-      menuItems = schemaModule.menuItems;
-      tables = schemaModule.tables;
-      orders = schemaModule.orders;
-    } catch (e) {
-      console.log('Trying alternate schema path...');
-      const schemaModule = await import('./dist/shared/schema.js');
-      menuItems = schemaModule.menuItems;
-      tables = schemaModule.tables;
-      orders = schemaModule.orders;
-    }
-  } catch (error) {
-    console.error('Failed to import required modules:', error);
-    throw error;
-  }
-}
+// Import our custom Docker-compatible database module
+import { db, menuItems, tables, orders, eq } from './docker-db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -254,11 +221,6 @@ async function setupDatabase() {
 const port = process.env.PORT || 5000;
 async function startServer() {
   try {
-    // Import modules first
-    log('Importing modules...');
-    await importModules();
-    log('Modules imported successfully');
-    
     // Setup database
     log('Setting up database connection...');
     await setupDatabase();

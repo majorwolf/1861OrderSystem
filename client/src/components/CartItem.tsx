@@ -35,7 +35,7 @@ export default function CartItem({ item, index }: CartItemProps) {
           <div className="text-right">
             <span className="font-medium">${calculatePrice(item)}</span>
             <div className="text-xs text-gray-500">
-              ${calculateUnitPrice(item)} each
+              ${calculateUnitPrice(item)} × {item.quantity}
             </div>
           </div>
         </div>
@@ -79,30 +79,45 @@ export default function CartItem({ item, index }: CartItemProps) {
 }
 
 // Helper function to calculate unit price
+// Calculate the unit price for a single item regardless of quantity
 function calculateUnitPrice(item: OrderItem): string {
-  // Parse the base price removing the $ and any + sign
-  let basePrice = parseFloat(item.price.replace('$', '').replace('+', ''));
-  
-  // Add price based on size
-  if (item.size === "Large") {
-    basePrice += 2; // $2 extra for large
+  try {
+    // Parse the base price removing the $ and any + sign
+    let basePrice = parseFloat(item.price.replace('$', '').replace('+', ''));
+    
+    // Add price based on size
+    if (item.size === "Large") {
+      basePrice += 2; // $2 extra for large
+    }
+    
+    // Add cost of additional toppings if present
+    if (item.addedToppings && item.addedToppings.length > 0) {
+      item.addedToppings.forEach((topping: any) => {
+        const toppingPrice = parseFloat(topping.price.replace('$', ''));
+        if (!isNaN(toppingPrice)) {
+          basePrice += toppingPrice;
+        }
+      });
+    }
+    
+    return basePrice.toFixed(2);
+  } catch (error) {
+    console.error("Error calculating unit price:", error, item);
+    return parseFloat(item.price.replace('$', '').replace('+', '')).toFixed(2);
   }
-  
-  // Add cost of additional toppings if present
-  if (item.addedToppings && item.addedToppings.length > 0) {
-    item.addedToppings.forEach((topping: any) => {
-      basePrice += parseFloat(topping.price.replace('$', ''));
-    });
-  }
-  
-  return basePrice.toFixed(2);
 }
 
-// Helper function to calculate total price based on quantity and size
+// Helper function to calculate total price based on quantity
 function calculatePrice(item: OrderItem): string {
-  const unitPrice = parseFloat(calculateUnitPrice(item));
-  
-  // Calculate total with quantity
-  const totalPrice = (unitPrice * item.quantity).toFixed(2);
-  return totalPrice;
+  try {
+    const unitPrice = parseFloat(calculateUnitPrice(item));
+    
+    // Calculate total with quantity
+    const totalPrice = (unitPrice * item.quantity).toFixed(2);
+    return totalPrice;
+  } catch (error) {
+    console.error("Error calculating total price:", error, item);
+    const fallbackPrice = parseFloat(item.price.replace('$', '').replace('+', ''));
+    return (fallbackPrice * item.quantity).toFixed(2);
+  }
 }

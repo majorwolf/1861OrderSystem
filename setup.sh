@@ -26,13 +26,29 @@ else
     echo ".env file already exists. Using existing configuration."
 fi
 
+# Stop any running containers for this project
+echo "Stopping any existing containers..."
+docker-compose down
+
 # Build and start the containers
 echo "Building and starting Docker containers..."
 docker-compose up -d --build
 
 # Wait for the database to be ready
 echo "Waiting for database to be ready..."
-sleep 10
+max_retries=30
+counter=0
+until docker-compose exec postgres pg_isready -U "${PGUSER:-orderapp}" || [ $counter -eq $max_retries ]; do
+    echo "Waiting for database connection..."
+    sleep 2
+    counter=$((counter+1))
+done
+
+if [ $counter -eq $max_retries ]; then
+    echo "Failed to connect to database after multiple attempts."
+    echo "Please check your PostgreSQL container logs with: docker-compose logs postgres"
+    exit 1
+fi
 
 # Run database migrations
 echo "Running database migrations..."
@@ -40,3 +56,12 @@ docker-compose exec app npm run db:push
 
 echo "Setup completed successfully!"
 echo "The application is now running at http://localhost:5000"
+echo ""
+echo "To view logs:"
+echo "  docker-compose logs -f"
+echo ""
+echo "To stop the application:"
+echo "  docker-compose down"
+echo ""
+echo "To stop and remove all data (including database):"
+echo "  docker-compose down -v"

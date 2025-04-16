@@ -1,54 +1,106 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { Order } from "@shared/schema";
 import { updateKitchenStatus as wsUpdateKitchenStatus } from "@/lib/websocket";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 
 export default function KitchenView() {
-  const [kitchenOrders, setKitchenOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [hideCompleted, setHideCompleted] = useState<boolean>(true);
+  const queryClient = useQueryClient();
   
-  // Fetch kitchen orders directly from API
-  useEffect(() => {
-    async function fetchKitchenOrders() {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/orders/type/kitchen');
-        if (!response.ok) {
-          throw new Error('Failed to fetch kitchen orders');
-        }
-        const data = await response.json();
-        // Sort orders by creation time (newest first)
-        const sortedOrders = [...data].sort((a, b) => {
-          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-        });
-        setKitchenOrders(sortedOrders);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching kitchen orders:', err);
-        setError('Failed to load kitchen orders. Please try again.');
-        setLoading(false);
+  // Use React Query for data fetching with polling
+  const { 
+    data: kitchenOrders = [], 
+    isLoading,
+    error 
+  } = useQuery({
+    queryKey: ['/api/orders/type/kitchen'],
+    queryFn: async () => {
+      const response = await fetch('/api/orders/type/kitchen');
+      if (!response.ok) {
+        throw new Error('Failed to fetch kitchen orders');
       }
+      const data = await response.json();
+      // Sort orders by creation time (newest first)
+      return [...data].sort((a, b) => {
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      });
+    },
+    refetchInterval: 10000, // Poll every 10 seconds
+    refetchOnWindowFocus: true,
+    staleTime: 5000 // Consider data fresh for 5 seconds
+  });
+  
+  // Mutation for updating kitchen status with optimistic updates
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ orderId, status }: { orderId: number, status: string }) => {
+      const response = await fetch(`/api/orders/${orderId}/kitchen-status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update kitchen status');
+      }
+      
+      return response.json();
+    },
+    // Optimistically update the cache
+    onMutate: async ({ orderId, status }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['/api/orders/type/kitchen'] });
+      
+      // Snapshot the previous value
+      const previousOrders = queryClient.getQueryData(['/api/orders/type/kitchen']);
+      
+      // Optimistically update the cache with the new status
+      queryClient.setQueryData<Order[]>(['/api/orders/type/kitchen'], (old = []) => {
+        return old.map(order => {
+          if (order.id === orderId) {
+            return { ...order, kitchenStatus: status };
+          }
+          return order;
+        });
+      });
+      
+      // Also send via WebSocket for real-time updates to other clients
+      wsUpdateKitchenStatus(orderId, status);
+      
+      // Return the snapshot so we can rollback if something goes wrong
+      return { previousOrders };
+    },
+    // If the mutation fails, use the context we returned above
+    onError: (_err, _variables, context: any) => {
+      if (context?.previousOrders) {
+        queryClient.setQueryData(['/api/orders/type/kitchen'], context.previousOrders);
+      }
+    },
+    // Always refetch after error or success
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders/type/kitchen'] });
     }
-    
-    fetchKitchenOrders();
-    
-    // Set up polling to refresh orders every 10 seconds
-    const intervalId = setInterval(fetchKitchenOrders, 10000);
-    
-    return () => clearInterval(intervalId);
-  }, []);
+  });
+
+  // Function to handle status button clicks
+  const handleStatusUpdate = (orderId: number, status: string) => {
+    updateStatusMutation.mutate({ orderId, status });
+  };
   
   // Calculate order counts by kitchen status
   const countOrdersByStatus = () => {
     const counts = {
+      new: 0,
       preparing: 0,
       ready: 0,
       completed: 0
     };
     
-    kitchenOrders.forEach(order => {
+    kitchenOrders.forEach((order: Order) => {
+      if (order.kitchenStatus === 'new') counts.new++;
       if (order.kitchenStatus === 'preparing') counts.preparing++;
       if (order.kitchenStatus === 'ready') counts.ready++;
       if (order.kitchenStatus === 'completed') counts.completed++;
@@ -61,9 +113,6 @@ export default function KitchenView() {
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
-      {/* Temporarily commented out until WebSocket issues are fixed */}
-      {/* <WebSocketHandler /> */}
-      
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Kitchen Orders</h1>
         <div className="flex items-center gap-4">
@@ -110,7 +159,11 @@ export default function KitchenView() {
       `}</style>
       
       {/* Order Status Summary */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+          <h3 className="text-red-700 font-semibold text-lg">New</h3>
+          <p className="text-3xl font-bold text-red-600">{statusCounts.new}</p>
+        </div>
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
           <h3 className="text-yellow-700 font-semibold text-lg">Preparing</h3>
           <p className="text-3xl font-bold text-yellow-600">{statusCounts.preparing}</p>
@@ -126,13 +179,14 @@ export default function KitchenView() {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {loading ? (
-          <div className="col-span-full bg-white p-6 rounded-lg shadow">
-            <p className="text-center">Loading orders...</p>
+        {isLoading ? (
+          <div className="col-span-full flex justify-center items-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            <span className="ml-2 text-gray-600">Loading orders...</span>
           </div>
         ) : error ? (
           <div className="col-span-full bg-white p-6 rounded-lg shadow">
-            <p className="text-center text-red-500">{error}</p>
+            <p className="text-center text-red-500">{String(error)}</p>
           </div>
         ) : kitchenOrders.filter(order => !hideCompleted || order.kitchenStatus !== 'completed').length === 0 ? (
           <div className="col-span-full bg-white p-6 rounded-lg shadow">
@@ -146,7 +200,7 @@ export default function KitchenView() {
           kitchenOrders
             .filter(order => !hideCompleted || order.kitchenStatus !== 'completed')
             .map(order => (
-            <div key={order.id} className="bg-white p-4 rounded-lg shadow">
+            <div key={order.id} className="bg-white p-4 rounded-lg shadow transition-all duration-300 ease-in-out">
               <div className="flex justify-between items-center mb-3">
                 <h2 className="text-lg font-semibold">Order #{order.id}</h2>
                 <span className={`px-2 py-1 rounded text-xs ${getStatusClass(order.kitchenStatus)}`}>
@@ -195,26 +249,33 @@ export default function KitchenView() {
                 }
               </ul>
               
-              {/* Item-specific notes are still shown, but the general order notes are no longer displayed */}
-              
               <div className="mt-4 pt-3 border-t flex justify-end space-x-2">
                 <button 
-                  className={`px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600 ${order.kitchenStatus === 'preparing' ? 'ring-2 ring-yellow-300' : ''}`}
-                  onClick={() => updateKitchenStatus(order.id, 'preparing')}
+                  className={`px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600 transition-all ${order.kitchenStatus === 'preparing' ? 'ring-2 ring-yellow-300' : ''}`}
+                  onClick={() => handleStatusUpdate(order.id, 'preparing')}
+                  disabled={updateStatusMutation.isPending}
                 >
-                  Preparing
+                  {updateStatusMutation.isPending && updateStatusMutation.variables?.orderId === order.id && updateStatusMutation.variables?.status === 'preparing' ? (
+                    <span className="flex items-center"><Loader2 className="w-3 h-3 animate-spin mr-1" /> Updating...</span>
+                  ) : 'Preparing'}
                 </button>
                 <button 
-                  className={`px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 ${order.kitchenStatus === 'ready' ? 'ring-2 ring-green-300' : ''}`}
-                  onClick={() => updateKitchenStatus(order.id, 'ready')}
+                  className={`px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-all ${order.kitchenStatus === 'ready' ? 'ring-2 ring-green-300' : ''}`}
+                  onClick={() => handleStatusUpdate(order.id, 'ready')}
+                  disabled={updateStatusMutation.isPending}
                 >
-                  Ready
+                  {updateStatusMutation.isPending && updateStatusMutation.variables?.orderId === order.id && updateStatusMutation.variables?.status === 'ready' ? (
+                    <span className="flex items-center"><Loader2 className="w-3 h-3 animate-spin mr-1" /> Updating...</span>
+                  ) : 'Ready'}
                 </button>
                 <button 
-                  className={`px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 ${order.kitchenStatus === 'completed' ? 'ring-2 ring-blue-300' : ''}`}
-                  onClick={() => updateKitchenStatus(order.id, 'completed')}
+                  className={`px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-all ${order.kitchenStatus === 'completed' ? 'ring-2 ring-blue-300' : ''}`}
+                  onClick={() => handleStatusUpdate(order.id, 'completed')}
+                  disabled={updateStatusMutation.isPending}
                 >
-                  Delivered
+                  {updateStatusMutation.isPending && updateStatusMutation.variables?.orderId === order.id && updateStatusMutation.variables?.status === 'completed' ? (
+                    <span className="flex items-center"><Loader2 className="w-3 h-3 animate-spin mr-1" /> Updating...</span>
+                  ) : 'Delivered'}
                 </button>
               </div>
             </div>
@@ -259,33 +320,4 @@ function extractCustomerName(notes: string | null): string {
     return match[1];
   }
   return 'Unknown';
-}
-
-function updateKitchenStatus(orderId: number, status: string) {
-  console.log(`Updating order ${orderId} kitchen status to: ${status}`);
-  
-  // First update via REST API directly
-  fetch(`/api/orders/${orderId}/kitchen-status`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ status })
-  })
-  .then(res => {
-    if (!res.ok) {
-      throw new Error('Failed to update kitchen status');
-    }
-    return res.json();
-  })
-  .then(updatedOrder => {
-    console.log('Kitchen status updated successfully:', updatedOrder);
-    
-    // Also send via WebSocket for real-time updates to other clients
-    wsUpdateKitchenStatus(orderId, status);
-  })
-  .catch(err => {
-    console.error('Error updating kitchen status:', err);
-    alert('Failed to update kitchen status. Please try again.');
-  });
 }

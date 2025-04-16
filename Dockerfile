@@ -20,9 +20,8 @@ RUN chmod +x docker-build.sh
 # Build the application and transpile TypeScript files
 RUN ./docker-build.sh
 
-# Create simplified direct production server files
-COPY server-prod.js ./
-COPY docker-db.js ./
+# Create simplified direct production server file
+COPY docker-server.js ./
 
 # Production stage
 FROM node:20-alpine
@@ -39,14 +38,10 @@ RUN npm ci --only=production
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/client/public ./client/public
-COPY --from=builder /app/server-prod.js ./server-prod.js
-COPY --from=builder /app/docker-db.js ./docker-db.js
-COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
-COPY --from=builder /app/shared ./shared
-COPY --from=builder /app/server ./server
+COPY --from=builder /app/docker-server.js ./docker-server.js
 
 # Expose the port
 EXPOSE 5000
 
 # Command to run the application using our simplified production server
-CMD ["node", "server-prod.js"]
+CMD ["node", "docker-server.js"]

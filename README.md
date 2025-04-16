@@ -28,6 +28,28 @@ A digital QR code-based restaurant ordering system designed specifically for 186
 
 ### Production Deployment Steps
 
+#### Option 1: Using the automated deployment script
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/your-repo/1861-public-house.git
+   cd 1861-public-house
+   ```
+
+2. Run the deployment script:
+   ```
+   ./deploy.sh
+   ```
+   
+   The script will:
+   - Check for required dependencies
+   - Offer to generate a secure SESSION_SECRET
+   - Ask for your server IP/domain name
+   - Build and start the Docker containers
+   - Generate QR codes for all tables
+
+#### Option 2: Manual deployment
+
 1. Clone the repository:
    ```
    git clone https://github.com/your-repo/1861-public-house.git
@@ -58,6 +80,12 @@ A digital QR code-based restaurant ordering system designed specifically for 186
    docker-compose down
    ```
 
+7. To generate QR codes for tables:
+   ```
+   export BASE_URL="http://your-server-ip:5000"
+   ./scripts/generate-qr.sh
+   ```
+
 ### Database Backups
 
 To create a database backup:
@@ -74,7 +102,32 @@ cat backup_file.sql | docker-compose exec -T db psql -U postgres orderingsystem
 
 ## QR Code Generation
 
-Generate QR codes for each table with URLs in this format:
+### Automatic QR Code Generation
+
+The application includes scripts to automatically generate QR codes for all tables in the database:
+
+1. Using the deploy script:
+   ```
+   ./deploy.sh
+   ```
+   When prompted, enter your server IP or domain name.
+
+2. Using the QR generation script directly:
+   ```
+   export BASE_URL="http://your-server-ip:5000"
+   ./scripts/generate-qr.sh
+   ```
+
+3. From within a running Docker container:
+   ```
+   docker-compose exec app ./scripts/generate-qr.sh
+   ```
+
+QR codes will be generated in the `qr-codes` directory with proper branding for 1861 Public House.
+
+### Manual QR Code Generation
+
+If needed, you can manually generate QR codes for each table with URLs in this format:
 ```
 http://your-server-ip:5000/customer?table={table_number}
 ```

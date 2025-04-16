@@ -64,18 +64,18 @@ export default function MenuItemCard({ item }: MenuItemCardProps) {
   
   return (
     <>
-      <Card className="overflow-hidden border border-gray-200 shadow-sm">
-        <CardContent className="p-4">
+      <Card className="overflow-hidden border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow">
+        <CardContent className="p-5">
           <div className="flex justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
+            <h3 className="text-lg font-semibold text-slate-800">{item.name}</h3>
             <span className="font-bold text-primary">{item.price}</span>
           </div>
-          <p className="text-gray-600 text-sm mt-1 min-h-[40px]">{item.description}</p>
+          <p className="text-slate-600 text-sm mt-1 min-h-[40px]">{item.description}</p>
           
           {!item.customizable && item.category === "pizza" && (
-            <div className="mt-2 mb-3">
+            <div className="mt-3 mb-3">
               <Select value={size} onValueChange={setSize}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full border-slate-300 rounded-lg">
                   <SelectValue placeholder="Size" />
                 </SelectTrigger>
                 <SelectContent>
@@ -87,20 +87,22 @@ export default function MenuItemCard({ item }: MenuItemCardProps) {
           )}
           
           <div className="mt-4 flex items-center justify-between">
-            <div className="flex items-center">
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={decrementQuantity}>
+            <div className="flex items-center space-x-1">
+              <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg border-slate-300" onClick={decrementQuantity}>
                 <Minus className="h-4 w-4" />
               </Button>
-              <span className="mx-2 font-medium text-gray-900">{quantity}</span>
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={incrementQuantity}>
+              <span className="mx-3 font-medium text-slate-800 text-lg">{quantity}</span>
+              <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg border-slate-300" onClick={incrementQuantity}>
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
             <Button 
               onClick={handleAddToCart} 
               disabled={quantity === 0}
-              variant={item.category === "pizza" ? "outline" : "default"}
-              className={item.category === "pizza" ? "bg-yellow-500 hover:bg-yellow-600 text-white" : "bg-primary hover:bg-red-700"}
+              variant={item.category === "pizza" ? "default" : "default"}
+              className={`font-medium rounded-lg ${item.category === "pizza" 
+                ? "bg-amber-600 hover:bg-amber-700 text-white" 
+                : "bg-primary hover:bg-primary/90 text-white"}`}
             >
               {item.category === "pizza" ? "Customize" : "Add to Order"}
             </Button>

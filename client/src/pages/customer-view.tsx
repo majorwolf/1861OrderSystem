@@ -95,27 +95,45 @@ export default function CustomerView() {
       {/* Temporarily commented out until WebSocket issues are fixed */}
       {/* <WebSocketHandler /> */}
       
-      <h1 className="text-3xl font-bold mb-6">Order for Table {tableId}</h1>
+      <div className="flex flex-col items-center mb-8">
+        <img 
+          src="/assets/cropped-4TyF5CXA-272x300.png" 
+          alt="1861 Public House Logo" 
+          className="h-28 mb-2"
+        />
+        <h1 className="text-3xl font-bold mb-2 text-primary text-center">Table {tableId} Ordering</h1>
+        <p className="text-slate-600 text-center">View our menu and place your order below</p>
+      </div>
       
-      <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <h2 className="text-xl font-semibold mb-4">Welcome to Pizza Palace!</h2>
-        <p className="mb-4">This is the customer ordering view for Table {tableId}.</p>
-        <p>Here you can browse the menu and place your order.</p>
+      <div className="bg-white p-6 rounded-xl shadow-md border border-slate-100 mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-primary">Welcome to 1861 Public House!</h2>
+        <p className="mb-2 text-slate-600">Browse our menu and add items to your cart.</p>
+        <p className="mb-4 text-slate-600">When you're ready, enter your last name and place your order.</p>
         
         {/* Menu section */}
-        <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+        <div className="mt-8 space-y-8">
           {loading ? (
-            <p className="text-center">Loading menu...</p>
+            <div className="flex flex-col items-center justify-center p-12">
+              <div className="w-12 h-12 border-4 border-t-primary rounded-full animate-spin mb-4"></div>
+              <p className="text-slate-600">Loading menu items...</p>
+            </div>
           ) : error ? (
-            <p className="text-center text-red-500">{error}</p>
+            <div className="p-6 text-center bg-red-50 rounded-xl border border-red-200">
+              <p className="text-red-600">{error}</p>
+            </div>
           ) : menuItems.length === 0 ? (
-            <p className="text-center text-gray-500">No menu items available.</p>
+            <div className="p-6 text-center bg-slate-50 rounded-xl border border-slate-200">
+              <p className="text-slate-600">No menu items available at this time.</p>
+            </div>
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-12">
               {/* Pizza Section */}
               <div>
-                <h3 className="font-semibold text-xl border-b pb-2 mb-4">Pizza</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center mb-6">
+                  <div className="h-10 w-2 bg-primary rounded-full mr-3"></div>
+                  <h3 className="font-bold text-2xl text-primary">Pizza</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {menuItems
                     .filter(item => item.category === 'pizza')
                     .map(item => (
@@ -126,8 +144,11 @@ export default function CustomerView() {
               
               {/* Drinks Section */}
               <div>
-                <h3 className="font-semibold text-xl border-b pb-2 mb-4">Drinks</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center mb-6">
+                  <div className="h-10 w-2 bg-primary rounded-full mr-3"></div>
+                  <h3 className="font-bold text-2xl text-primary">Drinks</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {menuItems
                     .filter(item => item.category === 'drink')
                     .map(item => (
@@ -140,22 +161,24 @@ export default function CustomerView() {
         </div>
         
         {/* Cart section */}
-        <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-          <h3 className="font-semibold text-lg mb-2">Your Order</h3>
+        <div className="mt-10 p-6 bg-white rounded-xl shadow-md border border-slate-100">
+          <h3 className="font-bold text-xl text-primary mb-4">Your Order</h3>
           
           {cart.length === 0 ? (
-            <p className="text-gray-500">Cart is empty. Add items from the menu to get started.</p>
+            <div className="py-8 text-center bg-slate-50 rounded-lg border border-slate-200">
+              <p className="text-slate-600">Your cart is empty. Add items from the menu to get started.</p>
+            </div>
           ) : (
             <>
-              <div className="space-y-2 mb-4">
+              <div className="space-y-3 mb-6">
                 {cart.map((item, index) => (
                   <CartItem key={index} item={item} index={index} />
                 ))}
               </div>
               
-              <div className="flex justify-between font-bold border-t pt-2">
-                <span>Total:</span>
-                <span>${calculateTotal()}</span>
+              <div className="flex justify-between font-bold text-lg border-t border-slate-200 pt-4 mt-4">
+                <span className="text-slate-800">Total:</span>
+                <span className="text-primary">${calculateTotal()}</span>
               </div>
             </>
           )}
@@ -163,10 +186,10 @@ export default function CustomerView() {
         
         {/* Last Name Input */}
         {cart.length > 0 && (
-          <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-            <h3 className="font-semibold text-lg mb-2">Your Information</h3>
+          <div className="mt-8 p-6 bg-white rounded-xl shadow-md border border-slate-100">
+            <h3 className="font-bold text-xl text-primary mb-4">Your Information</h3>
             <div className="mb-4">
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="lastName" className="block text-sm font-medium text-slate-700 mb-2">
                 Last Name (for order identification)
               </label>
               <input
@@ -174,7 +197,7 @@ export default function CustomerView() {
                 id="lastName"
                 value={customerLastName}
                 onChange={(e) => setCustomerLastName(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary"
                 placeholder="Enter your last name"
               />
             </div>
@@ -182,9 +205,9 @@ export default function CustomerView() {
         )}
         
         {/* Place order button */}
-        <div className="mt-6">
+        <div className="mt-8">
           <Button 
-            className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold text-lg"
+            className="w-full py-4 bg-primary hover:bg-primary/90 text-white font-bold text-lg rounded-lg shadow-md"
             disabled={cart.length === 0 || (cart.length > 0 && !customerLastName.trim()) || submitting}
             onClick={async () => {
               try {

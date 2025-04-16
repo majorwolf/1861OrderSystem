@@ -18,56 +18,80 @@ import NotFound from "./pages/not-found";
 // Simple Home Component
 function Home() {
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Pizza Palace Order System</h1>
-      
-      <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <h2 className="text-xl font-semibold mb-4">Restaurant Experience</h2>
-        <p className="mb-4">For customers scanning QR codes at their table:</p>
-        
-        <div className="mb-6">
-          <Link href="/table/1">
-            <span className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer">
-              Customer Ordering (Table 1)
-            </span>
-          </Link>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
+      <div className="p-8 max-w-5xl mx-auto">
+        <div className="flex flex-col items-center mb-8">
+          <img 
+            src="/assets/cropped-4TyF5CXA-272x300.png" 
+            alt="1861 Public House Logo" 
+            className="h-40 mb-4"
+          />
+          <h1 className="text-4xl font-bold text-primary text-center">
+            Digital Order System
+          </h1>
+          <p className="text-slate-600 mt-2 text-center max-w-xl">
+            Welcome to the 1861 Public House digital ordering platform.
+          </p>
         </div>
         
-        <div className="border-t pt-6 mt-6">
-          <h2 className="text-xl font-semibold mb-4">Staff Access</h2>
-          <p className="mb-4">For restaurant staff only:</p>
-          
-          <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
-            <Link href="/kitchen">
-              <span className="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 cursor-pointer">
-                Kitchen View
-              </span>
-            </Link>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white p-8 rounded-xl shadow-md border border-slate-100">
+            <h2 className="text-2xl font-semibold mb-4 text-primary">Customer Portal</h2>
+            <p className="mb-6 text-slate-600">For customers scanning QR codes at their table:</p>
             
-            <Link href="/bar">
-              <span className="inline-block bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 cursor-pointer">
-                Bar View
-              </span>
-            </Link>
-            
-            <Link href="/admin/qrcodes">
-              <span className="inline-block bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 cursor-pointer">
-                QR Code Management
-              </span>
-            </Link>
-            
-            <Link href="/admin/menu">
-              <span className="inline-block bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 cursor-pointer">
-                Menu Availability
-              </span>
-            </Link>
-            
-            <Link href="/admin/toppings">
-              <span className="inline-block bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 cursor-pointer">
-                Toppings Management
-              </span>
-            </Link>
+            <div className="flex flex-col space-y-3">
+              {[1, 2, 3, 4, 5].map(tableNumber => (
+                <Link key={tableNumber} href={`/table/${tableNumber}`}>
+                  <span className="flex items-center justify-center bg-primary text-white py-3 px-4 rounded-lg hover:bg-primary/90 transition-colors cursor-pointer text-center font-medium">
+                    Table {tableNumber} Ordering
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
+          
+          <div className="bg-white p-8 rounded-xl shadow-md border border-slate-100">
+            <h2 className="text-2xl font-semibold mb-4 text-primary">Staff Portal</h2>
+            <p className="mb-6 text-slate-600">For restaurant staff only:</p>
+            
+            <div className="flex flex-col space-y-3">
+              <Link href="/kitchen">
+                <span className="flex items-center justify-center bg-emerald-600 text-white py-3 px-4 rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer text-center font-medium">
+                  Kitchen View
+                </span>
+              </Link>
+              
+              <Link href="/bar">
+                <span className="flex items-center justify-center bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer text-center font-medium">
+                  Bar View
+                </span>
+              </Link>
+              
+              <h3 className="text-lg font-medium mt-4 mb-2 text-slate-700">Admin Tools</h3>
+              
+              <Link href="/admin/qrcodes">
+                <span className="flex items-center justify-center bg-slate-600 text-white py-2 px-4 rounded-lg hover:bg-slate-700 transition-colors cursor-pointer text-center">
+                  QR Code Management
+                </span>
+              </Link>
+              
+              <Link href="/admin/menu">
+                <span className="flex items-center justify-center bg-amber-600 text-white py-2 px-4 rounded-lg hover:bg-amber-700 transition-colors cursor-pointer text-center">
+                  Menu Management
+                </span>
+              </Link>
+              
+              <Link href="/admin/toppings">
+                <span className="flex items-center justify-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer text-center">
+                  Toppings Management
+                </span>
+              </Link>
+            </div>
+          </div>
+        </div>
+        
+        <div className="text-center text-sm text-slate-500">
+          <p>© 2025 1861 Public House, Barboursville, WV</p>
         </div>
       </div>
     </div>

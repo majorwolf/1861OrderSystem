@@ -21,7 +21,7 @@ docker-compose.yml
 .env.local
 .env.development
 .env.test
-.env.production
+# We keep .env.production for Docker builds
 *.log
 .DS_Store
 

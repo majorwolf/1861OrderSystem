@@ -86,6 +86,27 @@ A digital QR code-based restaurant ordering system designed specifically for 186
    ./scripts/generate-qr.sh
    ```
 
+### Upgrading the application
+
+When updates to the application code are available, you can use the upgrade script to safely update your deployment:
+
+1. Pull the latest code:
+   ```
+   git pull
+   ```
+
+2. Run the upgrade script:
+   ```
+   ./scripts/upgrade.sh
+   ```
+   
+The script will:
+- Offer to create a database backup before proceeding
+- Stop the current containers
+- Build new Docker images with the latest code
+- Start updated containers
+- Verify that the application is working properly
+
 ### Database Backups
 
 #### Using the convenience scripts
@@ -160,11 +181,31 @@ Print these QR codes and place them on the corresponding tables.
 - **Bar View**: `http://your-server-ip:5000/bar`
 - **Admin View**: `http://your-server-ip:5000/admin`
 
-## Maintenance
+## Maintenance & Monitoring
 
-- Regularly backup the database
+### Using the monitoring script
+
+The application includes a monitoring script to help check the health and status of the system:
+
+```
+./scripts/monitor.sh
+```
+
+This script provides information about:
+- Container status
+- Disk space usage
+- Application accessibility
+- Recent application logs
+- Database size and table sizes
+- Active database connections
+- Order statistics
+
+### General maintenance recommendations
+
+- Regularly backup the database using `./scripts/backup-db.sh`
 - Monitor disk space for the PostgreSQL volume
-- Check application logs for any errors
+- Check application logs with `docker-compose logs -f`
+- Run the monitoring script regularly to detect issues early
 
 ## Support
 

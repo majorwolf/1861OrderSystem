@@ -207,6 +207,48 @@ This script provides information about:
 - Check application logs with `docker-compose logs -f`
 - Run the monitoring script regularly to detect issues early
 
+## Development
+
+### Development Environment with Docker
+
+For a consistent development environment across machines, you can use Docker:
+
+1. Start the development environment:
+   ```
+   docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d
+   ```
+
+2. View logs:
+   ```
+   docker-compose logs -f app
+   ```
+
+3. Access the database admin interface at:
+   ```
+   http://localhost:8080
+   ```
+   Use server: `db`, username: `postgres`, password: `postgres`, database: `orderingsystem`
+
+4. Stop the development environment:
+   ```
+   docker-compose down
+   ```
+
+The development setup uses volume mounts, so changes to the source code will be reflected immediately without requiring a rebuild.
+
+### Database Migrations
+
+To apply database migrations during development:
+
+```
+./scripts/migrate-db.sh
+```
+
+This script will:
+- Create a backup before running migrations
+- Apply schema changes using Drizzle toolkit
+- Provide status and restore instructions if needed
+
 ## Support
 
 For technical support or feature requests, please contact the development team.

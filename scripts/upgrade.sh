@@ -56,6 +56,21 @@ echo -e "\n${BLUE}Starting updated containers...${NC}"
 docker-compose up -d
 echo -e "${GREEN}Containers started successfully.${NC}"
 
+# Run database migrations if needed
+echo -n "Do you want to run database migrations? (y/n): "
+read migration_response
+
+if [[ "$migration_response" == "y" || "$migration_response" == "Y" ]]; then
+  echo -e "${BLUE}Running database migrations...${NC}"
+  docker-compose exec app ./scripts/migrate-db.sh
+  if [ $? -ne 0 ]; then
+    echo -e "${RED}Database migration failed. Please check logs.${NC}"
+    echo -e "${YELLOW}The application may still work if no schema changes were needed.${NC}"
+  else
+    echo -e "${GREEN}Database migration completed successfully.${NC}"
+  fi
+fi
+
 # Wait for app to be healthy
 echo -e "\n${BLUE}Waiting for application to start...${NC}"
 attempt=1

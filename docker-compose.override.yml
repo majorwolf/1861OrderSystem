@@ -1,0 +1,44 @@
+version: '3.8'
+
+# This file is used for local development and is automatically merged with docker-compose.yml
+# It contains settings that are only relevant for development
+
+services:
+  # Override app service for development
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev # If you want to create a development-specific Dockerfile
+    volumes:
+      # Mount local directories for development
+      - ./client:/app/client
+      - ./server:/app/server
+      - ./shared:/app/shared
+      - ./public:/app/public
+    environment:
+      - NODE_ENV=development
+    # Override command to use development mode
+    command: ["npm", "run", "dev"]
+    # Enable file watching
+    develop:
+      watch:
+        - path: ./client
+          action: sync
+          target: /app/client
+        - path: ./server
+          action: sync
+          target: /app/server
+        - path: ./shared
+          action: sync
+          target: /app/shared
+  
+  # Database admin tool for development
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - app-network

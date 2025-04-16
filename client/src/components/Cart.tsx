@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { useOrderContext } from "@/context/OrderContext";
 import CartItem from "./CartItem";
+import OrderSuccess from "./OrderSuccess";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { OrderItem } from "@shared/schema";
@@ -25,6 +26,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
   const { toast } = useToast();
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showOrderSuccess, setShowOrderSuccess] = useState(false);
   
   const calculateSubtotal = (): number => {
     return cart.reduce((sum, item) => {
@@ -119,15 +121,11 @@ export default function Cart({ isOpen, onClose }: CartProps) {
       
       await Promise.all(orders);
       
-      toast({
-        title: "Order Submitted",
-        description: "Your order has been sent to the kitchen and bar!",
-      });
-      
-      // Clear cart and close sheet
+      // Clear cart and show success screen
       clearCart();
       setNotes("");
       onClose();
+      setShowOrderSuccess(true);
     } catch (error) {
       console.error(error);
       toast({
@@ -140,9 +138,16 @@ export default function Cart({ isOpen, onClose }: CartProps) {
     }
   };
   
+  const handleSuccessClose = () => {
+    setShowOrderSuccess(false);
+  };
+  
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="flex flex-col h-full w-full max-w-md sm:max-w-md">
+    <>
+      {showOrderSuccess && <OrderSuccess onClose={handleSuccessClose} />}
+      
+      <Sheet open={isOpen} onOpenChange={onClose}>
+        <SheetContent className="flex flex-col h-full w-full max-w-md sm:max-w-md">
         <SheetHeader className="text-left">
           <SheetTitle>Your Order</SheetTitle>
           <SheetDescription>
@@ -207,5 +212,6 @@ export default function Cart({ isOpen, onClose }: CartProps) {
         </SheetFooter>
       </SheetContent>
     </Sheet>
+    </>
   );
 }

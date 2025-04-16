@@ -88,6 +88,26 @@ A digital QR code-based restaurant ordering system designed specifically for 186
 
 ### Database Backups
 
+#### Using the convenience scripts
+
+The application includes scripts to help manage database backups:
+
+1. Create a backup:
+   ```
+   ./scripts/backup-db.sh
+   ```
+   This will create a timestamped backup file in the `backups` directory.
+
+2. Restore from a backup:
+   ```
+   ./scripts/restore-db.sh backups/db_backup_20250416_120000.sql
+   ```
+   This will restore the database from the specified backup file.
+
+#### Manual backup and restore
+
+If needed, you can manually backup and restore the database:
+
 To create a database backup:
 
 ```

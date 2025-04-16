@@ -18,7 +18,8 @@ services:
       - PGDATABASE=orderingsystem
       - PGPORT=5432
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: always
     networks:
       - app-network
@@ -43,7 +44,8 @@ services:
       - PGDATABASE=orderingsystem
       - PGPORT=5432
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     command: ["./scripts/init-db.sh"]
     networks:
       - app-network

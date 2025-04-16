@@ -3,6 +3,7 @@ import { Link, useParams } from "wouter";
 import { MenuItem, OrderItem } from "@shared/schema";
 import MenuItemCard from "@/components/MenuItemCard";
 import CartItem from "@/components/CartItem";
+import OrderSuccess from "@/components/OrderSuccess";
 import { Button } from "@/components/ui/button";
 import { useOrderContext } from "@/context/OrderContext";
 
@@ -22,6 +23,7 @@ export default function CustomerView() {
   // State for order submission
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showOrderSuccess, setShowOrderSuccess] = useState(false);
   
   // Get cart from order context
   const { cart, setTableId, clearCart } = useOrderContext();
@@ -88,8 +90,14 @@ export default function CustomerView() {
     );
   }
   
+  const handleSuccessClose = () => {
+    setShowOrderSuccess(false);
+  };
+  
   return (
     <div className="p-8 max-w-4xl mx-auto">
+      {showOrderSuccess && <OrderSuccess onClose={handleSuccessClose} />}
+      
       {/* Temporarily commented out until WebSocket issues are fixed */}
       {/* <WebSocketHandler /> */}
       
@@ -235,7 +243,7 @@ export default function CustomerView() {
                 console.log('Order created successfully:', createdOrder);
                 
                 // Show success message and clear the form
-                alert(`Order placed successfully for ${customerLastName}!`);
+                setShowOrderSuccess(true);
                 clearCart();
                 setCustomerLastName("");
               } catch (err) {

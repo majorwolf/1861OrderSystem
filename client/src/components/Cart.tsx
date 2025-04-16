@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { useOrderContext } from "@/context/OrderContext";
 import CartItem from "./CartItem";
 import OrderSuccess from "./OrderSuccess";
@@ -143,75 +143,75 @@ export default function Cart({ isOpen, onClose }: CartProps) {
   };
   
   return (
-    <>
+    <Fragment>
       {showOrderSuccess && <OrderSuccess onClose={handleSuccessClose} />}
       
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent className="flex flex-col h-full w-full max-w-md sm:max-w-md">
-        <SheetHeader className="text-left">
-          <SheetTitle>Your Order</SheetTitle>
-          <SheetDescription>
-            {cart.length === 0 ? 
-              "Your cart is empty." : 
-              `You have ${cart.length} item${cart.length !== 1 ? 's' : ''} in your cart.`
-            }
-          </SheetDescription>
-        </SheetHeader>
-        
-        <div className="flex-grow overflow-auto my-4">
-          {cart.map((item, index) => (
-            <CartItem key={index} item={item} index={index} />
-          ))}
+          <SheetHeader className="text-left">
+            <SheetTitle>Your Order</SheetTitle>
+            <SheetDescription>
+              {cart.length === 0 ? 
+                "Your cart is empty." : 
+                `You have ${cart.length} item${cart.length !== 1 ? 's' : ''} in your cart.`
+              }
+            </SheetDescription>
+          </SheetHeader>
           
-          {cart.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-40 text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <p>Add items to your cart</p>
-            </div>
-          )}
-        </div>
-        
-        {cart.length > 0 && (
-          <>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Order Notes</label>
-              <Textarea 
-                placeholder="Special instructions or allergies..." 
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
+          <div className="flex-grow overflow-auto my-4">
+            {cart.map((item, index) => (
+              <CartItem key={index} item={item} index={index} />
+            ))}
             
-            <div className="py-4 border-t border-gray-200">
-              <div className="flex justify-between mb-2">
-                <span className="font-medium">Subtotal</span>
-                <span className="font-medium">${subtotal.toFixed(2)}</span>
+            {cart.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <p>Add items to your cart</p>
               </div>
-              <div className="flex justify-between text-sm text-gray-500 mb-4">
-                <span>Tax (included)</span>
-                <span>Included</span>
+            )}
+          </div>
+          
+          {cart.length > 0 && (
+            <Fragment>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">Order Notes</label>
+                <Textarea 
+                  placeholder="Special instructions or allergies..." 
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
               </div>
-              <div className="flex justify-between text-lg font-bold">
-                <span>Total</span>
-                <span>${subtotal.toFixed(2)}</span>
+              
+              <div className="py-4 border-t border-gray-200">
+                <div className="flex justify-between mb-2">
+                  <span className="font-medium">Subtotal</span>
+                  <span className="font-medium">${subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-500 mb-4">
+                  <span>Tax (included)</span>
+                  <span>Included</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold">
+                  <span>Total</span>
+                  <span>${subtotal.toFixed(2)}</span>
+                </div>
               </div>
-            </div>
-          </>
-        )}
-        
-        <SheetFooter className="flex-shrink-0">
-          <Button 
-            className="w-full bg-primary hover:bg-red-700" 
-            disabled={cart.length === 0 || isSubmitting}
-            onClick={handleSubmitOrder}
-          >
-            {isSubmitting ? "Placing Order..." : "Place Order"}
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
-    </>
+            </Fragment>
+          )}
+          
+          <SheetFooter className="flex-shrink-0">
+            <Button 
+              className="w-full bg-primary hover:bg-red-700" 
+              disabled={cart.length === 0 || isSubmitting}
+              onClick={handleSubmitOrder}
+            >
+              {isSubmitting ? "Placing Order..." : "Place Order"}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    </Fragment>
   );
 }

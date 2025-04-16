@@ -170,12 +170,7 @@ export default function BarView() {
                   ))}
               </ul>
               
-              {order.notes && (
-                <div className="mt-3 border-t pt-2">
-                  <h3 className="font-medium mb-1">Notes:</h3>
-                  <p className="text-sm italic">{order.notes}</p>
-                </div>
-              )}
+              {/* Item-specific notes are still shown, but the general order notes are no longer displayed */}
               
               <div className="mt-4 pt-3 border-t flex justify-end space-x-2">
                 <button 

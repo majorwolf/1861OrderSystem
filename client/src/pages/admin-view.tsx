@@ -410,9 +410,9 @@ export default function AdminView() {
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Admin Menu Management</h1>
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:items-center mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Admin Menu Management</h1>
         <Link href="/">
           <span className="text-blue-600 hover:underline cursor-pointer">← Back to Home</span>
         </Link>
@@ -545,19 +545,19 @@ export default function AdminView() {
             <table className="w-full table-auto divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
                     Item Name
                   </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                     Category
                   </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Price
                   </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Availability
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                    Avail.
                   </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                     Actions
                   </th>
                 </tr>
@@ -565,17 +565,18 @@ export default function AdminView() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {menuItems.map(item => (
                   <tr key={item.id}>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-4 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{item.name}</div>
                       <div className="text-sm text-gray-500 hidden sm:block">{item.description.substring(0, 50)}...</div>
+                      <div className="text-xs text-gray-500 italic sm:hidden">{item.category}</div>
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-4 py-4 whitespace-nowrap hidden sm:table-cell">
                       <div className="text-sm text-gray-900">{item.category}</div>
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-4 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{item.price}</div>
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-4 py-4 whitespace-nowrap">
                       <label className="inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
@@ -583,17 +584,17 @@ export default function AdminView() {
                           checked={!unavailableItems.has(item.id)}
                           onChange={() => toggleItemAvailability(item.id)}
                         />
-                        <div className="relative w-10 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        <div className="relative w-9 h-5 sm:w-10 sm:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                         <span className="ms-2 text-sm font-medium text-gray-900 hidden sm:inline">
                           {unavailableItems.has(item.id) ? 'Unavailable' : 'Available'}
                         </span>
                       </label>
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-4 py-4 whitespace-nowrap">
                       <div className="flex gap-1 sm:gap-2">
                         <button
                           onClick={() => startEditingItem(item)}
-                          className="text-xs px-2 py-1 text-white bg-blue-600 rounded hover:bg-blue-700"
+                          className="text-xs px-1 sm:px-2 py-1 text-white bg-blue-600 rounded hover:bg-blue-700"
                           aria-label="Edit"
                         >
                           <span className="hidden sm:inline">Edit</span>
@@ -602,7 +603,7 @@ export default function AdminView() {
                         <button
                           onClick={() => deleteMenuItem(item.id)}
                           disabled={deletingItem === item.id}
-                          className="text-xs px-2 py-1 text-white bg-red-600 rounded hover:bg-red-700 disabled:bg-gray-400"
+                          className="text-xs px-1 sm:px-2 py-1 text-white bg-red-600 rounded hover:bg-red-700 disabled:bg-gray-400"
                           aria-label="Delete"
                         >
                           {deletingItem === item.id ? (

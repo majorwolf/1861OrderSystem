@@ -154,8 +154,9 @@ export default function KitchenView() {
                 </span>
               </div>
               
-              <p className="text-sm mb-2">Table: {order.tableId}</p>
-              <p className="text-sm mb-3">Time: {formatTime(order.createdAt)}</p>
+              <p className="text-base font-medium mb-2">Table: <span className="text-xl font-bold">{order.tableId}</span></p>
+              <p className="text-sm mb-2">Time: {formatTime(order.createdAt)}</p>
+              <p className="text-sm mb-3">Customer: {extractCustomerName(order.notes)}</p>
               
               <h3 className="font-medium mb-2 border-t pt-2">Items:</h3>
               <ul className="space-y-2">
@@ -203,23 +204,20 @@ export default function KitchenView() {
               
               <div className="mt-4 pt-3 border-t flex justify-end space-x-2">
                 <button 
-                  className="px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600"
+                  className={`px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600 ${order.kitchenStatus === 'preparing' ? 'ring-2 ring-yellow-300' : ''}`}
                   onClick={() => updateKitchenStatus(order.id, 'preparing')}
-                  disabled={order.kitchenStatus !== 'new'}
                 >
                   Preparing
                 </button>
                 <button 
-                  className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+                  className={`px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 ${order.kitchenStatus === 'ready' ? 'ring-2 ring-green-300' : ''}`}
                   onClick={() => updateKitchenStatus(order.id, 'ready')}
-                  disabled={order.kitchenStatus !== 'preparing'}
                 >
                   Ready
                 </button>
                 <button 
-                  className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+                  className={`px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 ${order.kitchenStatus === 'completed' ? 'ring-2 ring-blue-300' : ''}`}
                   onClick={() => updateKitchenStatus(order.id, 'completed')}
-                  disabled={order.kitchenStatus !== 'ready'}
                 >
                   Delivered
                 </button>
@@ -255,6 +253,17 @@ function getStatusClass(status: string): string {
     default:
       return 'bg-gray-100 text-gray-800';
   }
+}
+
+function extractCustomerName(notes: string | null): string {
+  if (!notes) return 'Unknown';
+  
+  // Extract the customer name from "Order for [LastName]"
+  const match = notes.match(/Order for (.*)/i);
+  if (match && match[1]) {
+    return match[1];
+  }
+  return 'Unknown';
 }
 
 function updateKitchenStatus(orderId: number, status: string) {

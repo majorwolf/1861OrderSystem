@@ -41,6 +41,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/dist/client ./public
 COPY --from=builder /app/.env ./.env
 COPY --from=builder /app/attached_assets ./attached_assets
+COPY --from=builder /app/server/production.js ./server/production.js
 
 # Copy scripts directory
 COPY scripts/ ./scripts/
@@ -49,5 +50,5 @@ RUN chmod +x scripts/init-db.sh
 # Expose the port the app runs on
 EXPOSE 5000
 
-# Command to run the application
-CMD ["npm", "start"]
+# Command to run the production server instead of using npm start
+CMD ["node", "server/production.js"]

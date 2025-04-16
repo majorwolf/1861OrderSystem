@@ -1,16 +1,26 @@
 #!/bin/bash
+
+# Database initialization script for 1861 Public House ordering system
+# This script initializes the PostgreSQL database with the schema and initial data
+
 set -e
 
-# Wait for database to be ready
-echo "Waiting for PostgreSQL to start..."
-until PGPASSWORD=$POSTGRES_PASSWORD psql -h $PGHOST -U $PGUSER -d $PGDATABASE -c '\q'; do
-  echo "PostgreSQL is unavailable - sleeping"
+echo "Database initialization script started..."
+
+# Wait for PostgreSQL to be ready
+echo "Waiting for PostgreSQL to be ready..."
+until pg_isready -h "$PGHOST" -U "$PGUSER"; do
+  echo "Postgres is unavailable - sleeping"
   sleep 1
 done
 
-echo "PostgreSQL started, running database setup..."
+echo "PostgreSQL is ready - initializing database..."
 
-# Run database migrations
-NODE_ENV=production npm run db:push
+# Create schema using our production server
+echo "Creating database schema..."
+NODE_ENV=production node ./server/production.js --setup-db-only || {
+  echo "Failed to create database schema"
+  exit 1
+}
 
-echo "Database initialization completed!"
+echo "Database initialization completed successfully!"

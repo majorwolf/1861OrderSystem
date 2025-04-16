@@ -10,6 +10,9 @@ RUN npm ci
 # Copy the rest of the application
 COPY . .
 
+# Make sure the public directory exists
+RUN mkdir -p public
+
 # Copy production environment file
 COPY .env.production .env
 
@@ -29,12 +32,15 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm ci --production
+# Install all dependencies (including dev dependencies) since we need them for running in production
+# The codebase currently imports Vite even in production mode
+RUN npm ci
 
 # Copy built application from the builder stage
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/dist/client ./public
 COPY --from=builder /app/.env ./.env
+COPY --from=builder /app/attached_assets ./attached_assets
 
 # Copy scripts directory
 COPY scripts/ ./scripts/

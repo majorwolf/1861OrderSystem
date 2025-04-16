@@ -43,7 +43,7 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:-1861PublicHouseOrderingAppSecret}
     ports:
       - "5000:5000"
-    command: node docker-start.js
+    command: node server-prod.js
 
 volumes:
   postgres_data:

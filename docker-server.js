@@ -3,12 +3,14 @@
 
 import express from 'express';
 import { createServer } from 'http';
-import { WebSocketServer } from 'ws';
+import ws from 'ws';
+const { WebSocketServer } = ws;
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Pool } from 'pg';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import pkg from 'pg';
+const { Pool } = pkg;
+import { drizzle } from 'drizzle-orm/pg-core';
 import { pgTable, serial, text, boolean, timestamp, integer, jsonb } from 'drizzle-orm/pg-core';
 import { eq, and } from 'drizzle-orm';
 

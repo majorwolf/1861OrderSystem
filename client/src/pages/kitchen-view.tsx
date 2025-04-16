@@ -160,11 +160,7 @@ export default function KitchenView() {
               <h3 className="font-medium mb-2 border-t pt-2">Items:</h3>
               <ul className="space-y-2">
                 {order.items
-                  .filter(item => item.name.toLowerCase().indexOf('coke') === -1 && 
-                                 item.name.toLowerCase().indexOf('sprite') === -1 && 
-                                 item.name.toLowerCase().indexOf('water') === -1 && 
-                                 item.name.toLowerCase().indexOf('beer') === -1 &&
-                                 item.category !== 'drink')
+                  .filter(item => item.category !== 'drink')
                   .map((item, index) => (
                     <li key={index} className="mb-3 pb-2 border-b border-gray-100 last:border-0">
                       <div className="flex justify-between">

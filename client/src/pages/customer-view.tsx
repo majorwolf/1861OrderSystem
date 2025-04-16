@@ -191,14 +191,12 @@ export default function CustomerView() {
                 
                 // Determine order type based on cart items
                 const hasFood = cart.some(item => {
-                  // Consider an item as food if it's not in the drink category
-                  return item.name.toLowerCase().indexOf('pizza') >= 0 || 
-                         item.name.toLowerCase().indexOf('wing') >= 0;
+                  // Consider an item as food if it's in the pizza category or another food category
+                  return item.category === 'pizza' || 
+                         (item.category && item.category !== 'drink');
                 });
                 const hasDrink = cart.some(item => 
-                  item.name.toLowerCase().indexOf('coke') >= 0 || 
-                  item.name.toLowerCase().indexOf('sprite') >= 0 ||
-                  item.name.toLowerCase().indexOf('drink') >= 0
+                  item.category === 'drink'
                 );
                 
                 // Set the type based on contents

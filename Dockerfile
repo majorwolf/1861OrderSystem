@@ -21,9 +21,10 @@ WORKDIR /app
 # Set environment to production
 ENV NODE_ENV=production
 
-# Copy package files and install only production dependencies
+# Copy package files and install all dependencies
+# We're not using --only=production because some dev dependencies might be needed for the server
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist

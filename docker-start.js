@@ -7,13 +7,44 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 
+// Setup import path resolution for shared modules
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
+// Handle aliased imports
+import { pathToFileURL } from 'url';
+const originalResolve = import.meta.resolve;
+if (originalResolve) {
+  import.meta.resolve = (specifier, parent) => {
+    if (specifier.startsWith('@shared/')) {
+      const newPath = specifier.replace('@shared/', './shared/');
+      return pathToFileURL(path.resolve(process.cwd(), newPath.substring(2) + '.js')).href;
+    }
+    return originalResolve(specifier, parent);
+  };
+}
+
 // Dynamic imports to handle ESM paths correctly
 const importRoutes = async () => {
-  return await import('./server/routes.js');
+  try {
+    // Try the compiled version first
+    return await import('./dist/server/routes.js');
+  } catch (e) {
+    console.log('Failed to import from dist, trying server directory...');
+    // Fall back to TypeScript version (for development)
+    return await import('./server/routes.js');
+  }
 };
 
 const importDbSetup = async () => {
-  return await import('./server/db-setup.js');
+  try {
+    // Try the compiled version first
+    return await import('./dist/server/db-setup.js');
+  } catch (e) {
+    console.log('Failed to import from dist, trying server directory...');
+    // Fall back to TypeScript version (for development)
+    return await import('./server/db-setup.js');
+  }
 };
 
 const __filename = fileURLToPath(import.meta.url);

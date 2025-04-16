@@ -50,9 +50,19 @@ if [ $counter -eq $max_retries ]; then
     exit 1
 fi
 
+# Check the container logs for any errors
+echo "Checking application logs for errors..."
+docker-compose logs app
+
 # Run database migrations
 echo "Running database migrations..."
-docker-compose exec app npm run db:push
+docker-compose exec -T app npm run db:push || {
+  echo "Migration failed! Checking logs..."
+  docker-compose logs app
+  echo "Possible issue with database connection or schema."
+  echo "Try running: docker-compose down -v && ./setup.sh"
+  exit 1
+}
 
 echo "Setup completed successfully!"
 echo "The application is now running at http://localhost:5000"

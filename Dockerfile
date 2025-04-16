@@ -10,11 +10,15 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Add our build script
+COPY docker-build.sh ./
+RUN chmod +x docker-build.sh
 
-# Create a specialized production startup script
-COPY docker-start.js ./docker-start.js
+# Build the application and transpile TypeScript files
+RUN ./docker-build.sh
+
+# Create a specialized production startup script 
+COPY docker-start.js ./
 
 # Production stage
 FROM node:20-alpine

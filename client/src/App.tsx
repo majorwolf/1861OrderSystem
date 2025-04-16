@@ -12,6 +12,7 @@ import BarView from "./pages/bar-view";
 import QRCodeView from "./pages/qrcode-view";
 import AdminView from "./pages/admin-view";
 import ToppingsManagement from "./pages/toppings-management";
+import OrderConfirmationView from "./pages/order-confirmation-view";
 import NotFound from "./pages/not-found";
 
 // Simple Home Component
@@ -91,6 +92,7 @@ function App() {
             <Switch>
               <Route path="/" component={Home} />
               <Route path="/table/:tableId" component={CustomerView} />
+              <Route path="/order-confirmation/:tableId" component={OrderConfirmationView} />
               <Route path="/kitchen" component={KitchenView} /> 
               <Route path="/bar" component={BarView} />
               <Route path="/admin/qrcodes" component={QRCodeView} />

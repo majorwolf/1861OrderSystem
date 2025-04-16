@@ -18,6 +18,8 @@ COPY .env.production .env
 
 # Build the application
 RUN npm run build
+# Copy client build to public directory
+RUN mkdir -p public && cp -r dist/client/* public/ || true
 
 # Production stage
 FROM node:20-slim
@@ -38,7 +40,10 @@ RUN npm ci
 
 # Copy built application from the builder stage
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/dist/client ./public
+# Create public directory for static files
+RUN mkdir -p ./public
+# Copy static files (if exists)
+COPY --from=builder /app/public ./public || true
 COPY --from=builder /app/.env ./.env
 COPY --from=builder /app/attached_assets ./attached_assets
 COPY --from=builder /app/server/production.js ./server/production.js

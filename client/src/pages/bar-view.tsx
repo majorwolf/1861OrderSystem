@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { Order } from "@shared/schema";
-import { updateBarStatus as wsUpdateBarStatus } from "@/lib/websocket";
+import { updateBarStatus } from "@/lib/api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
@@ -35,19 +35,13 @@ export default function BarView() {
   // Mutation for updating bar status with optimistic updates
   const updateStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: number, status: string }) => {
-      const response = await fetch(`/api/orders/${orderId}/bar-status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status })
-      });
+      const response = await updateBarStatus(orderId, status);
       
-      if (!response.ok) {
-        throw new Error('Failed to update bar status');
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to update bar status');
       }
       
-      return response.json();
+      return response.data;
     },
     // Optimistically update the cache
     onMutate: async ({ orderId, status }) => {
@@ -67,8 +61,8 @@ export default function BarView() {
         });
       });
       
-      // Also send via WebSocket for real-time updates to other clients
-      wsUpdateBarStatus(orderId, status);
+      // We're already making the API call in the mutationFn, no need for duplicate call here
+      console.log(`Optimistically updating bar status for order ${orderId} to ${status}`);
       
       // Return the snapshot so we can rollback if something goes wrong
       return { previousOrders };

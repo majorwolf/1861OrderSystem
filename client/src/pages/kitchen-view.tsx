@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Order } from "@shared/schema";
+import { Order, OrderItem } from "@shared/schema";
 import { updateKitchenStatus } from "@/lib/api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -209,8 +209,8 @@ export default function KitchenView() {
               <h3 className="font-medium mb-2 border-t pt-2">Items:</h3>
               <ul className="space-y-2">
                 {order.items
-                  .filter(item => item.category !== 'drink')
-                  .map((item, index) => (
+                  .filter((item: OrderItem) => item.category !== 'drink')
+                  .map((item: OrderItem, index: number) => (
                     <li key={index} className="mb-3 pb-2 border-b border-gray-100 last:border-0">
                       <div className="flex justify-between">
                         <span className="font-medium">{item.quantity}x {item.name}</span>
@@ -221,7 +221,7 @@ export default function KitchenView() {
                       {item.addedToppings && item.addedToppings.length > 0 && (
                         <div className="text-sm text-gray-600 mt-1">
                           <span className="font-medium">Added:</span>{' '}
-                          {item.addedToppings.map(t => t.name).join(', ')}
+                          {item.addedToppings.map((t: { name: string }) => t.name).join(', ')}
                         </div>
                       )}
                       

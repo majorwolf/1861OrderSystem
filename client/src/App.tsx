@@ -112,6 +112,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <OrderProvider>
+        {/* DataPoller for real-time updates via polling */}
+        <DataPoller 
+          menuPollInterval={30000} 
+          ordersPollInterval={5000} 
+        />
         <div className="app-container min-h-screen bg-gray-50">
           {loaded ? (
             <Switch>

@@ -228,7 +228,7 @@ export default function KitchenView() {
                       {item.removedToppings && item.removedToppings.length > 0 && (
                         <div className="text-sm text-gray-600 mt-1">
                           <span className="font-medium">Removed:</span>{' '}
-                          {item.removedToppings.map(t => t.name).join(', ')}
+                          {item.removedToppings.map((t: { name: string }) => t.name).join(', ')}
                         </div>
                       )}
                       

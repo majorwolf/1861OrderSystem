@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Order, OrderItem } from "@shared/schema";
-import { updateBarStatus } from "@/lib/api-client";
+import { Order } from "@shared/schema";
+import { updateBarStatus as wsUpdateBarStatus } from "@/lib/websocket";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
@@ -35,13 +35,19 @@ export default function BarView() {
   // Mutation for updating bar status with optimistic updates
   const updateStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: number, status: string }) => {
-      const response = await updateBarStatus(orderId, status);
+      const response = await fetch(`/api/orders/${orderId}/bar-status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+      });
       
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to update bar status');
+      if (!response.ok) {
+        throw new Error('Failed to update bar status');
       }
       
-      return response.data;
+      return response.json();
     },
     // Optimistically update the cache
     onMutate: async ({ orderId, status }) => {
@@ -61,8 +67,8 @@ export default function BarView() {
         });
       });
       
-      // We're already making the API call in the mutationFn, no need for duplicate call here
-      console.log(`Optimistically updating bar status for order ${orderId} to ${status}`);
+      // Also send via WebSocket for real-time updates to other clients
+      wsUpdateBarStatus(orderId, status);
       
       // Return the snapshot so we can rollback if something goes wrong
       return { previousOrders };
@@ -206,8 +212,8 @@ export default function BarView() {
               <h3 className="font-medium mb-2 border-t pt-2">Drinks:</h3>
               <ul className="space-y-2">
                 {order.items
-                  .filter((item: OrderItem) => item.category === "drink")
-                  .map((item: OrderItem, index: number) => (
+                  .filter(item => item.category === "drink")
+                  .map((item: any, index: number) => (
                     <li key={index} className="flex justify-between">
                       <span>{item.quantity}x {item.name}</span>
                       <span>{item.size && `(${item.size})`}</span>

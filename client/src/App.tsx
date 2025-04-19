@@ -4,7 +4,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Switch, Route, Link } from "wouter";
 import { OrderProvider } from "@/context/OrderContext";
-// Polling is now handled in OrderContext
 
 // Import page components
 import CustomerView from "./pages/customer-view";

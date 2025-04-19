@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Order, OrderItem } from "@shared/schema";
-import { updateKitchenStatus } from "@/lib/api-client";
+import { Order } from "@shared/schema";
+import { updateKitchenStatus as wsUpdateKitchenStatus } from "@/lib/websocket";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
@@ -35,13 +35,19 @@ export default function KitchenView() {
   // Mutation for updating kitchen status with optimistic updates
   const updateStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: number, status: string }) => {
-      const response = await updateKitchenStatus(orderId, status);
+      const response = await fetch(`/api/orders/${orderId}/kitchen-status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+      });
       
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to update kitchen status');
+      if (!response.ok) {
+        throw new Error('Failed to update kitchen status');
       }
       
-      return response.data;
+      return response.json();
     },
     // Optimistically update the cache
     onMutate: async ({ orderId, status }) => {
@@ -61,8 +67,8 @@ export default function KitchenView() {
         });
       });
       
-      // We're already making the API call in the mutationFn, no need for duplicate call here
-      console.log(`Optimistically updating kitchen status for order ${orderId} to ${status}`);
+      // Also send via WebSocket for real-time updates to other clients
+      wsUpdateKitchenStatus(orderId, status);
       
       // Return the snapshot so we can rollback if something goes wrong
       return { previousOrders };
@@ -209,8 +215,8 @@ export default function KitchenView() {
               <h3 className="font-medium mb-2 border-t pt-2">Items:</h3>
               <ul className="space-y-2">
                 {order.items
-                  .filter((item: OrderItem) => item.category !== 'drink')
-                  .map((item: OrderItem, index: number) => (
+                  .filter(item => item.category !== 'drink')
+                  .map((item, index) => (
                     <li key={index} className="mb-3 pb-2 border-b border-gray-100 last:border-0">
                       <div className="flex justify-between">
                         <span className="font-medium">{item.quantity}x {item.name}</span>
@@ -221,14 +227,14 @@ export default function KitchenView() {
                       {item.addedToppings && item.addedToppings.length > 0 && (
                         <div className="text-sm text-gray-600 mt-1">
                           <span className="font-medium">Added:</span>{' '}
-                          {item.addedToppings.map((t: { name: string }) => t.name).join(', ')}
+                          {item.addedToppings.map(t => t.name).join(', ')}
                         </div>
                       )}
                       
                       {item.removedToppings && item.removedToppings.length > 0 && (
                         <div className="text-sm text-gray-600 mt-1">
                           <span className="font-medium">Removed:</span>{' '}
-                          {item.removedToppings.map((t: { name: string }) => t.name).join(', ')}
+                          {item.removedToppings.map(t => t.name).join(', ')}
                         </div>
                       )}
                       

@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { 
   orderStatusUpdateSchema, 
@@ -13,7 +14,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
   const httpServer = createServer(app);
 
-  // Define RESTful API routes
+  // Create WebSocket server
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Store active connections
+  const clients = new Set<WebSocket>();
+
+  // WebSocket connection handler
+  wss.on('connection', (ws) => {
+    // Add to clients set
+    clients.add(ws);
+    
+    log('WebSocket client connected');
+    
+    // Handle messages
+    ws.on('message', async (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        if (data.type === 'orderStatusUpdate') {
+          // Validate order status update (legacy)
+          const validation = orderStatusUpdateSchema.safeParse(data.payload);
+          
+          if (!validation.success) {
+            ws.send(JSON.stringify({ 
+              type: 'error', 
+              message: 'Invalid order status update'
+            }));
+            return;
+          }
+          
+          // Update order status
+          const updatedOrder = await storage.updateOrderStatus(validation.data);
+          
+          if (!updatedOrder) {
+            ws.send(JSON.stringify({ 
+              type: 'error', 
+              message: 'Order not found'
+            }));
+            return;
+          }
+          
+          // Broadcast order update to all clients
+          broadcastToAll({
+            type: 'orderUpdated',
+            payload: updatedOrder
+          });
+        } else if (data.type === 'kitchenStatusUpdate') {
+          // Validate kitchen status update
+          const validation = kitchenStatusUpdateSchema.safeParse(data.payload);
+          
+          if (!validation.success) {
+            ws.send(JSON.stringify({ 
+              type: 'error', 
+              message: 'Invalid kitchen status update'
+            }));
+            return;
+          }
+          
+          // Update kitchen status
+          const updatedOrder = await storage.updateKitchenStatus(validation.data);
+          
+          if (!updatedOrder) {
+            ws.send(JSON.stringify({ 
+              type: 'error', 
+              message: 'Order not found'
+            }));
+            return;
+          }
+          
+          // Broadcast order update to all clients
+          broadcastToAll({
+            type: 'orderUpdated',
+            payload: updatedOrder
+          });
+        } else if (data.type === 'barStatusUpdate') {
+          // Validate bar status update
+          const validation = barStatusUpdateSchema.safeParse(data.payload);
+          
+          if (!validation.success) {
+            ws.send(JSON.stringify({ 
+              type: 'error', 
+              message: 'Invalid bar status update'
+            }));
+            return;
+          }
+          
+          // Update bar status
+          const updatedOrder = await storage.updateBarStatus(validation.data);
+          
+          if (!updatedOrder) {
+            ws.send(JSON.stringify({ 
+              type: 'error', 
+              message: 'Order not found'
+            }));
+            return;
+          }
+          
+          // Broadcast order update to all clients
+          broadcastToAll({
+            type: 'orderUpdated',
+            payload: updatedOrder
+          });
+        }
+      } catch (error) {
+        ws.send(JSON.stringify({ 
+          type: 'error', 
+          message: 'Invalid message format'
+        }));
+      }
+    });
+    
+    // Handle disconnection
+    ws.on('close', () => {
+      clients.delete(ws);
+      log('WebSocket client disconnected');
+    });
+    
+    // Send initial data to the client
+    sendInitialData(ws);
+  });
+  
+  // Function to broadcast a message to all connected clients
+  function broadcastToAll(data: any) {
+    const message = JSON.stringify(data);
+    clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  }
+  
+  // Function to send initial data to a new client
+  async function sendInitialData(ws: WebSocket) {
+    try {
+      const menuItems = await storage.getMenuItems();
+      const activeOrders = await storage.getOrders();
+      
+      ws.send(JSON.stringify({
+        type: 'initialData',
+        payload: {
+          menuItems,
+          activeOrders
+        }
+      }));
+    } catch (error) {
+      console.error('Error sending initial data:', error);
+    }
+  }
+
+  // API Routes
   
   // Get all menu items
   app.get('/api/menu', async (req, res) => {
@@ -48,6 +198,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const results = await Promise.all(updatePromises);
       const validResults = results.filter(Boolean);
+      
+      // Broadcast the menu updates to all connected clients
+      broadcastToAll({
+        type: 'menuUpdated',
+        payload: {
+          action: 'batchUpdated',
+          items: validResults
+        }
+      });
       
       console.log(`Successfully updated ${validResults.length} menu items`);
       res.status(200).json({ 
@@ -86,6 +245,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const createdItem = await storage.createMenuItem(menuItemData);
       console.log('Created menu item:', createdItem);
       
+      // Broadcast the menu update to all connected clients
+      broadcastToAll({
+        type: 'menuUpdated',
+        payload: {
+          action: 'created',
+          item: createdItem
+        }
+      });
+      
       res.status(201).json(createdItem);
     } catch (error) {
       console.error('Error creating menu item:', error);
@@ -106,6 +274,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!deleted) {
         return res.status(404).json({ message: 'Menu item not found' });
       }
+      
+      // Broadcast the menu update to all connected clients
+      broadcastToAll({
+        type: 'menuUpdated',
+        payload: {
+          action: 'deleted',
+          itemId: id
+        }
+      });
       
       res.status(200).json({ message: 'Menu item deleted successfully' });
     } catch (error) {
@@ -152,6 +329,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Menu item not found' });
       }
       
+      // Broadcast the menu update to all connected clients
+      broadcastToAll({
+        type: 'menuUpdated',
+        payload: {
+          action: 'updated',
+          item: updatedItem
+        }
+      });
+      
       res.status(200).json(updatedItem);
     } catch (error) {
       console.error('Error updating menu item:', error);
@@ -159,19 +345,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get all orders
-  app.get('/api/orders', async (req, res) => {
-    try {
-      const orders = await storage.getOrders();
-      res.json(orders);
-    } catch (error) {
-      console.error('Error getting all orders:', error);
-      res.status(500).json({ message: 'Failed to get orders' });
-    }
-  });
-  
   // Get menu items by category
-  app.get('/api/menu/category/:category', async (req, res) => {
+  app.get('/api/menu/:category', async (req, res) => {
     try {
       const { category } = req.params;
       const menuItems = await storage.getMenuItemsByCategory(category);
@@ -264,6 +439,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the order
       const newOrder = await storage.createOrder(validation.data);
       
+      // Broadcast the new order to all connected clients
+      broadcastToAll({
+        type: 'newOrder',
+        payload: newOrder
+      });
+      
       res.status(201).json(newOrder);
     } catch (error) {
       res.status(500).json({ message: 'Failed to create order' });
@@ -271,10 +452,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Update order status (legacy - keeping for backward compatibility)
-  app.post('/api/orders/status', async (req, res) => {
+  app.patch('/api/orders/:id/status', async (req, res) => {
     try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid order ID' });
+      }
+      
       // Validate the status update
-      const validation = orderStatusUpdateSchema.safeParse(req.body);
+      const validation = orderStatusUpdateSchema.safeParse({
+        id,
+        status: req.body.status
+      });
       
       if (!validation.success) {
         return res.status(400).json({ message: 'Invalid status update', errors: validation.error.errors });
@@ -287,6 +476,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Order not found' });
       }
       
+      // Broadcast the order update to all connected clients
+      broadcastToAll({
+        type: 'orderUpdated',
+        payload: updatedOrder
+      });
+      
       res.json(updatedOrder);
     } catch (error) {
       res.status(500).json({ message: 'Failed to update order status' });
@@ -294,10 +489,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update kitchen status
-  app.post('/api/orders/kitchen-status', async (req, res) => {
+  app.patch('/api/orders/:id/kitchen-status', async (req, res) => {
     try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid order ID' });
+      }
+      
       // Validate the status update
-      const validation = kitchenStatusUpdateSchema.safeParse(req.body);
+      const validation = kitchenStatusUpdateSchema.safeParse({
+        id,
+        status: req.body.status
+      });
       
       if (!validation.success) {
         return res.status(400).json({ message: 'Invalid kitchen status update', errors: validation.error.errors });
@@ -310,6 +513,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Order not found' });
       }
       
+      // Broadcast the order update to all connected clients
+      broadcastToAll({
+        type: 'orderUpdated',
+        payload: updatedOrder
+      });
+      
       res.json(updatedOrder);
     } catch (error) {
       res.status(500).json({ message: 'Failed to update kitchen status' });
@@ -317,10 +526,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update bar status
-  app.post('/api/orders/bar-status', async (req, res) => {
+  app.patch('/api/orders/:id/bar-status', async (req, res) => {
     try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid order ID' });
+      }
+      
       // Validate the status update
-      const validation = barStatusUpdateSchema.safeParse(req.body);
+      const validation = barStatusUpdateSchema.safeParse({
+        id,
+        status: req.body.status
+      });
       
       if (!validation.success) {
         return res.status(400).json({ message: 'Invalid bar status update', errors: validation.error.errors });
@@ -333,6 +550,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Order not found' });
       }
       
+      // Broadcast the order update to all connected clients
+      broadcastToAll({
+        type: 'orderUpdated',
+        payload: updatedOrder
+      });
+      
       res.json(updatedOrder);
     } catch (error) {
       res.status(500).json({ message: 'Failed to update bar status' });
@@ -340,11 +563,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Purge all orders (for testing/admin purposes)
-  app.post('/api/orders/purge', async (req, res) => {
+  app.delete('/api/orders/purge-all', async (req, res) => {
     try {
       const success = await storage.purgeAllOrders();
       
       if (success) {
+        // Broadcast to all clients that orders have been purged
+        broadcastToAll({
+          type: 'ordersPurged',
+          payload: { message: 'All orders have been purged' }
+        });
+        
         res.status(200).json({ message: 'All orders have been purged successfully' });
       } else {
         res.status(500).json({ message: 'Failed to purge orders' });
@@ -367,19 +596,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to get toppings' });
     }
   });
-  
+
   // Get toppings by category
   app.get('/api/toppings/category/:category', async (req, res) => {
     try {
       const { category } = req.params;
-      const toppings = await storage.getToppingsByCategory(category);
-      res.json(toppings);
+      const toppingsByCategory = await storage.getToppingsByCategory(category);
+      res.json(toppingsByCategory);
     } catch (error) {
       console.error('Error getting toppings by category:', error);
       res.status(500).json({ message: 'Failed to get toppings by category' });
     }
   });
-  
+
   // Create a new topping
   app.post('/api/toppings', async (req, res) => {
     try {
@@ -389,24 +618,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Missing required fields' });
       }
       
-      const toppingData = {
-        name: newTopping.name,
-        price: newTopping.price,
-        category: newTopping.category,
-        available: newTopping.available !== false
-      };
+      const createdTopping = await storage.createTopping(newTopping);
       
-      const createdTopping = await storage.createTopping(toppingData);
+      // Broadcast the new topping to all connected clients
+      broadcastToAll({
+        type: 'toppingCreated',
+        payload: createdTopping
+      });
+      
       res.status(201).json(createdTopping);
     } catch (error) {
       console.error('Error creating topping:', error);
       res.status(500).json({ message: 'Failed to create topping' });
     }
   });
-  
+
+  // Update a topping
+  app.put('/api/toppings/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid topping ID' });
+      }
+      
+      const updateData = req.body;
+      if (!updateData.name || !updateData.price || !updateData.category) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+      
+      const updatedTopping = await storage.updateTopping(id, updateData);
+      if (!updatedTopping) {
+        return res.status(404).json({ message: 'Topping not found' });
+      }
+      
+      // Broadcast the updated topping
+      broadcastToAll({
+        type: 'toppingUpdated',
+        payload: updatedTopping
+      });
+      
+      res.json(updatedTopping);
+    } catch (error) {
+      console.error('Error updating topping:', error);
+      res.status(500).json({ message: 'Failed to update topping' });
+    }
+  });
+
+  // Delete a topping
+  app.delete('/api/toppings/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid topping ID' });
+      }
+      
+      const deleted = await storage.deleteTopping(id);
+      if (!deleted) {
+        return res.status(404).json({ message: 'Topping not found' });
+      }
+      
+      // Broadcast the deletion
+      broadcastToAll({
+        type: 'toppingDeleted',
+        payload: { id }
+      });
+      
+      res.json({ message: 'Topping deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting topping:', error);
+      res.status(500).json({ message: 'Failed to delete topping' });
+    }
+  });
+
   // Update topping availability
   app.patch('/api/toppings/:id/availability', async (req, res) => {
     try {
+      console.log('Toggle availability request received for ID:', req.params.id);
+      console.log('Request body:', req.body);
+      
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: 'Invalid topping ID' });
@@ -426,6 +715,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!updatedTopping) {
         return res.status(404).json({ message: 'Topping not found' });
       }
+      
+      // Broadcast the updated topping
+      broadcastToAll({
+        type: 'toppingUpdated',
+        payload: updatedTopping
+      });
       
       res.json(updatedTopping);
     } catch (error) {
@@ -473,7 +768,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the updated list of toppings for the menu item
       const updatedToppings = await storage.getMenuItemToppings(menuItemId);
       
-      res.status(201).json({ menuItemId, toppingId, success: true, toppings: updatedToppings });
+      // Broadcast the update
+      broadcastToAll({
+        type: 'menuItemToppingsUpdated',
+        payload: {
+          menuItemId,
+          toppings: updatedToppings
+        }
+      });
+      
+      res.status(201).json({ menuItemId, toppingId, success: true });
     } catch (error) {
       console.error('Error adding topping to menu item:', error);
       res.status(500).json({ message: 'Failed to add topping to menu item' });
@@ -498,7 +802,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the updated list of toppings for the menu item
       const updatedToppings = await storage.getMenuItemToppings(menuItemId);
       
-      res.json({ menuItemId, toppingId, success: true, toppings: updatedToppings });
+      // Broadcast the update
+      broadcastToAll({
+        type: 'menuItemToppingsUpdated',
+        payload: {
+          menuItemId,
+          toppings: updatedToppings
+        }
+      });
+      
+      res.json({ menuItemId, toppingId, success: true });
     } catch (error) {
       console.error('Error removing topping from menu item:', error);
       res.status(500).json({ message: 'Failed to remove topping from menu item' });
